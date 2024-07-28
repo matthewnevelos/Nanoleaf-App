@@ -9,15 +9,15 @@ from PIL import Image, ImageTk
 # Add tools
 # work on zooming
 # custom sizes/shapes low priority
+# Add styles
 
 class App(tk.Tk):
     """
-    Main window
+    Main window for UofC Nanoleaf Editor
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
-        Initialize the App
-        Use pack
+        Initialize the App, set up main window and its components
         """
         super().__init__()
 
@@ -42,12 +42,12 @@ class App(tk.Tk):
 
 
 class ToolSideBar(ttk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent: tk.Tk) -> None:
         super().__init__(parent, width=150)
 
-        # TODO add style
-        style = ttk.Style()
-        style.configure('TFrame', background='lightgray')
+        # Style
+        # style = ttk.Style()
+        # style.configure('TFrame', background='lightgray')
 
         # List of icons
         icons = [
@@ -74,7 +74,10 @@ class ToolSideBar(ttk.Frame):
 
 
 class Painting(ttk.Frame):
-    def __init__(self, parent):
+    """
+    Canvas for drawing
+    """
+    def __init__(self, parent: tk.Tk) -> None:
         super().__init__(parent)
         
         self.canvas_width = 600
@@ -91,13 +94,16 @@ class Painting(ttk.Frame):
         
         self.draw_grid(50)
 
-    def on_resize(self, event):
+    def on_resize(self, event: tk.Event) -> None:
+        """
+        Resize the canvas to fit drawing in new window size
+        """
         toolbar_width = self.master.toolbar.winfo_width()
         self.canvas_width = self.master.winfo_width() - toolbar_width
         self.canvas_height = self.master.winfo_height()
         self.canvas.config(width=self.canvas_width, height=self.canvas_height)
 
-    def draw_grid(self, triangle_size):
+    def draw_grid(self, triangle_size: int) -> None:
         """
         Background is a rectangle
         Draw triangles row by row in the pattern used in UofC.
@@ -117,7 +123,7 @@ class Painting(ttk.Frame):
         If growing, the first triangle will be upward
         The first and last triangle of a row will be the same orientation
         """
-        #Draw background first
+        # Draw background first
         self.background = self.canvas.create_rectangle(0, 0, self.canvas_width, self.canvas_height, outline="", fill="blue")
 
         prev_num_cols = 0
@@ -154,23 +160,28 @@ class Painting(ttk.Frame):
             prev_num_cols = columns_per_row[row]
         
 
-    def on_canvas_click(self, event):
+    def on_canvas_click(self, event: tk.Event) -> None:
+        """
+        Handles canvas click event
+        """
         # Get the item (triangle) clicked on
         item = self.canvas.find_closest(event.x, event.y)
         
         # Check if the click was on the background
-
         if item[0]== self.background:
             print(item)
             # Change the color of the background
-            self.canvas.itemconfig(self.background, fill="green")  # Change to green or any desired color
+            self.canvas.itemconfig(self.background, fill="green") 
         else:
             # Change the color of the triangle
-            self.canvas.itemconfig(item, fill="red")  # Change the fill color to red
+            self.canvas.itemconfig(item, fill="red")
         print(item)
 
 
-def main():
+def main() -> None:
+    """
+    Main function to start application
+    """
     app = App()
     app.mainloop()
         
