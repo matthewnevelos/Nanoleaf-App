@@ -2,6 +2,14 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 
+# TODO 
+# Type hints if feeling quirky
+# Docstring
+# Finish nanolist
+# Add tools
+# work on zooming
+# custom sizes/shapes low priority
+
 class App(tk.Tk):
     """
     Main window
@@ -77,22 +85,21 @@ class Painting(ttk.Frame):
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
         self.bind("<Configure>", self.on_resize)
+        self.canvas.bind("<Button-1>", self.on_canvas_click)  # Bind left-click event
+
+        self.triangles = []  # Store references to the triangle items
         
         self.draw_grid(50)
 
     def on_resize(self, event):
-        """
-        Resize window such that the drawing stays centered
-        """
         toolbar_width = self.master.toolbar.winfo_width()
         self.canvas_width = self.master.winfo_width() - toolbar_width
         self.canvas_height = self.master.winfo_height()
         self.canvas.config(width=self.canvas_width, height=self.canvas_height)
-        self.canvas.delete("all")
-        self.draw_grid(self.triangle_length)
 
     def draw_grid(self, triangle_size):
         """
+        Background is a rectangle
         Draw triangles row by row in the pattern used in UofC.
         (0,0) is top left
 
@@ -110,6 +117,9 @@ class Painting(ttk.Frame):
         If growing, the first triangle will be upward
         The first and last triangle of a row will be the same orientation
         """
+        #Draw background first
+        self.background = self.canvas.create_rectangle(0, 0, self.canvas_width, self.canvas_height, outline="", fill="blue")
+
         prev_num_cols = 0
         self.triangle_length = triangle_size
         self.triangle_height = self.triangle_length * (3**0.5) / 2
@@ -135,12 +145,29 @@ class Painting(ttk.Frame):
                 else:
                     Y = [y_upper, y_lower, y_upper]  # Downwards
                 
-                self.canvas.create_polygon(list(zip(X, Y)), outline="white")
+                triangle = self.canvas.create_polygon(list(zip(X, Y)), outline="white", fill="")
+                self.triangles.append(triangle)  # Store reference to the triangle
 
                 # Increment x-coords
                 X = [i + self.triangle_length / 2 for i in X]
 
             prev_num_cols = columns_per_row[row]
+        
+
+    def on_canvas_click(self, event):
+        # Get the item (triangle) clicked on
+        item = self.canvas.find_closest(event.x, event.y)
+        
+        # Check if the click was on the background
+
+        if item[0]== self.background:
+            print(item)
+            # Change the color of the background
+            self.canvas.itemconfig(self.background, fill="green")  # Change to green or any desired color
+        else:
+            # Change the color of the triangle
+            self.canvas.itemconfig(item, fill="red")  # Change the fill color to red
+        print(item)
 
 
 def main():
