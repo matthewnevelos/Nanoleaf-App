@@ -7,21 +7,11 @@ class App(tk.Tk):
     Main window for UofC Nanoleaf Editor
     """
     def __init__(self) -> None:
-        """
-        Initialize the App, set up main window and its components
-        """
         super().__init__()
-
         self.title("UofC Nanoleaf Editor")
 
         # Set window size and center it
-        aw = 800
-        ah = 600
-        sw = self.winfo_screenwidth()
-        sh = self.winfo_screenheight()
-        x = (sw - aw) // 2
-        y = (sh - ah) // 2
-        self.geometry(f'{aw}x{ah}+{x}+{y}')
+        self.geometry(self.center_window(800, 600))
 
         self.toolbar = ToolSideBar(self)
         self.toolbar.pack(fill='y', side='left', expand=False)
@@ -29,96 +19,73 @@ class App(tk.Tk):
         self.canvas_frame = Painting(self)
         self.canvas_frame.pack(fill="both", side="right", expand=True)
 
-        self.update_idletasks()  # Update the geometry manager
+    def center_window(self, width: int, height: int) -> str:
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        x, y = (sw - width) // 2, (sh - height) // 2
+        return f'{width}x{height}+{x}+{y}'
 
 
 class ToolSideBar(ttk.Frame):
     def __init__(self, parent: tk.Tk) -> None:
         super().__init__(parent, width=150)
-
         self.icons = {}
         self.buttons = {}
         self.colour1 = "#fff"
         self.colour2 = "#000"
+        self.selected_tool = None
 
         # Define styles for selected and unselected buttons
         style = ttk.Style()
         style.configure("TButton", padding=6)
         style.map("TButton", background=[("active", "#ececec")])
-
         style.configure("Selected.TButton", background="#d3d3d3")
 
-        # Load images and create buttons
+        # Create tools and color buttons
+        self.create_color_buttons()
         self.create_tools()
 
         # Initially select pen
-        self.selected_tool = "pen"
-        self.update_button_style("pen")
+        self.select_tool("pen")
 
-        # Create color selection buttons
-        self.create_color_buttons()
-
-    def create_tools(self):
-        # List of icons
+    def create_tools(self) -> None:
         icons = ["blend", "bucket", "dropper", "eraser", "gradient", "line", "magnify", "pen", "pencil"]
-
         for i, icon in enumerate(icons):
             try:
                 image = Image.open(f"icons/{icon}.png").resize((50, 50))
                 photo = ImageTk.PhotoImage(image)
-
                 button = ttk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon))
-
-                row = i // 2
-                column = i % 2
-                button.grid(row=row, column=column, padx=5, pady=5)
+                button.grid(row=i // 2 + 2, column=i % 2, padx=5, pady=5)  # Adjust row to start below color buttons
                 self.icons[icon] = photo  # Store reference
                 self.buttons[icon] = button
             except FileNotFoundError:
                 print(f"Icon {icon}.png not found in the 'icons/' directory.")
 
-    def create_color_buttons(self):
-        # Create color selection buttons
-        color1_button = ttk.Button(self, text="Color 1", command=self.choose_color1)
-        color1_button.grid(row=5, column=0, pady=5)
+    def create_color_buttons(self) -> None:
+        self.color1_button = tk.Button(self, bg=self.colour1, width=10, height=2, command=self.choose_color1)
+        self.color1_button.grid(row=0, column=0, pady=5)
 
-        color2_button = ttk.Button(self, text="Color 2", command=self.choose_color2)
-        color2_button.grid(row=5, column=1, pady=5)
+        self.color2_button = tk.Button(self, bg=self.colour2, width=10, height=2, command=self.choose_color2)
+        self.color2_button.grid(row=0, column=1, pady=5)
 
-        # Create labels to display current colors
-        self.color1_label = tk.Label(self, bg=self.colour1, width=10, height=2)
-        self.color1_label.grid(row=6, column=0, pady=5)
-
-        self.color2_label = tk.Label(self, bg=self.colour2, width=10, height=2)
-        self.color2_label.grid(row=6, column=1, pady=5)
-
-    def choose_color1(self):
+    def choose_color1(self) -> None:
         color = colorchooser.askcolor(title="Choose Color 1")[1]
         if color:
             self.colour1 = color
-            self.update_color_display()
+            self.color1_button.config(bg=self.colour1)
 
-    def choose_color2(self):
+    def choose_color2(self) -> None:
         color = colorchooser.askcolor(title="Choose Color 2")[1]
         if color:
             self.colour2 = color
-            self.update_color_display()
+            self.color2_button.config(bg=self.colour2)
 
-    def update_color_display(self):
-        self.color1_label.config(bg=self.colour1)
-        self.color2_label.config(bg=self.colour2)
-
-    def select_tool(self, tool):
+    def select_tool(self, tool: str) -> None:
         self.selected_tool = tool
-        print(self.selected_tool)
         self.update_button_style(tool)
 
-    def update_button_style(self, selected_tool):
+    def update_button_style(self, selected_tool: str) -> None:
         for tool, button in self.buttons.items():
-            if tool == selected_tool:
-                button.configure(style="Selected.TButton")
-            else:
-                button.configure(style="TButton")
+            button.configure(style="Selected.TButton" if tool == selected_tool else "TButton")
 
 
 class Painting(ttk.Frame):
@@ -178,7 +145,7 @@ class Painting(ttk.Frame):
         If growing, the first triangle will be upward
         The first and last triangle of a row will be the same orientation
         """
-        # Draw background first
+        self.canvas.delete("all")
         self.background = self.canvas.create_rectangle(0, 0, self.canvas_width, self.canvas_height, outline="", fill="blue")
 
         prev_num_cols = 0
@@ -187,13 +154,9 @@ class Painting(ttk.Frame):
         columns_per_row = [13, 15, 17, 19, 21, 23, 23, 21, 19, 17]
 
         for row, num_cols in enumerate(columns_per_row):
-            growing = True
-            num_rows = len(columns_per_row)
-
-            if columns_per_row[row] <= prev_num_cols:
-                growing = False
+            growing = num_cols > prev_num_cols
             x_margin = (self.canvas_width - num_cols * self.triangle_length / 2) / 2
-            y_margin = (self.canvas_height - num_rows * self.triangle_height) / 2
+            y_margin = (self.canvas_height - len(columns_per_row) * self.triangle_height) / 2
             
             y_lower = y_margin + self.triangle_height * (row + 1)
             y_upper = y_margin + self.triangle_height * row
@@ -201,47 +164,36 @@ class Painting(ttk.Frame):
             X = [x_margin, x_margin + self.triangle_length / 2, x_margin + self.triangle_length]
 
             for col in range(num_cols):
-                if (col + growing) % 2 == 1:
-                    Y = [y_lower, y_upper, y_lower]  # Upwards
-                else:
-                    Y = [y_upper, y_lower, y_upper]  # Downwards
-                
+                Y = [y_lower, y_upper, y_lower] if (col + growing) % 2 == 1 else [y_upper, y_lower, y_upper]
                 triangle = self.canvas.create_polygon(list(zip(X, Y)), outline="white", fill="")
-                self.triangles.append(triangle)  # Store reference to the triangle
-
-                # Increment x-coords
+                self.triangles.append(triangle)
                 X = [i + self.triangle_length / 2 for i in X]
 
-            prev_num_cols = columns_per_row[row]
+            prev_num_cols = num_cols
 
     def on_canvas_click(self, event: tk.Event) -> None:
         """
         Handles canvas click event
         """
-        # Get the item (triangle) clicked on
         item = self.canvas.find_closest(event.x, event.y)
-        
-        # Check if the click was on the background
-        if item[0] == self.background:
-            print("Clicked on the background")
-        else:
+        if item[0] != self.background:
             tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
             if tool_function:
                 tool_function(item)
             else:
                 print(f"No function defined for tool {self.master.toolbar.selected_tool}")
 
-    def pen(self, item) -> None:
+    def pen(self, item: int) -> None:
         """
         Pen tool functionality: Change the color of the triangle to the selected color
         """
-        self.canvas.itemconfig(item, fill=self.master.toolbar.colour1)  # Use the selected color
+        self.canvas.itemconfig(item, fill=self.master.toolbar.colour1)
 
-    def eraser(self, item) -> None:
+    def eraser(self, item: int) -> None:
         """
         Eraser tool functionality: Reset the color of the triangle
         """
-        self.canvas.itemconfig(item, fill="")  # Reset to default
+        self.canvas.itemconfig(item, fill="")
 
 
 def main() -> None:
