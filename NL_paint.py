@@ -1,15 +1,6 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, colorchooser
 from PIL import Image, ImageTk
-
-# TODO 
-# Type hints if feeling quirky
-# Docstring
-# Finish nanolist
-# Add tools
-# work on zooming
-# custom sizes/shapes low priority
-# Add styles
 
 class App(tk.Tk):
     """
@@ -45,32 +36,89 @@ class ToolSideBar(ttk.Frame):
     def __init__(self, parent: tk.Tk) -> None:
         super().__init__(parent, width=150)
 
-        # Style
-        # style = ttk.Style()
-        # style.configure('TFrame', background='lightgray')
-
-        # List of icons
-        icons = [
-            "blend", "bucket", "dropper", "eraser", "gradient",
-            "line", "magnify", "pen", "pencil"
-        ]
-
-        # Store references to icons to prevent garbage collection
         self.icons = {}
+        self.buttons = {}
+        self.colour1 = "#fff"
+        self.colour2 = "#000"
+
+        # Define styles for selected and unselected buttons
+        style = ttk.Style()
+        style.configure("TButton", padding=6)
+        style.map("TButton", background=[("active", "#ececec")])
+
+        style.configure("Selected.TButton", background="#d3d3d3")
 
         # Load images and create buttons
+        self.create_tools()
+
+        # Initially select pen
+        self.selected_tool = "pen"
+        self.update_button_style("pen")
+
+        # Create color selection buttons
+        self.create_color_buttons()
+
+    def create_tools(self):
+        # List of icons
+        icons = ["blend", "bucket", "dropper", "eraser", "gradient", "line", "magnify", "pen", "pencil"]
+
         for i, icon in enumerate(icons):
             try:
                 image = Image.open(f"icons/{icon}.png").resize((50, 50))
                 photo = ImageTk.PhotoImage(image)
-                self.icons[icon] = photo  # Store reference
 
-                button = ttk.Button(self, image=photo)
+                button = ttk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon))
+
                 row = i // 2
                 column = i % 2
-                button.grid(row=row, column=column)
+                button.grid(row=row, column=column, padx=5, pady=5)
+                self.icons[icon] = photo  # Store reference
+                self.buttons[icon] = button
             except FileNotFoundError:
                 print(f"Icon {icon}.png not found in the 'icons/' directory.")
+
+    def create_color_buttons(self):
+        # Create color selection buttons
+        color1_button = ttk.Button(self, text="Color 1", command=self.choose_color1)
+        color1_button.grid(row=5, column=0, pady=5)
+
+        color2_button = ttk.Button(self, text="Color 2", command=self.choose_color2)
+        color2_button.grid(row=5, column=1, pady=5)
+
+        # Create labels to display current colors
+        self.color1_label = tk.Label(self, bg=self.colour1, width=10, height=2)
+        self.color1_label.grid(row=6, column=0, pady=5)
+
+        self.color2_label = tk.Label(self, bg=self.colour2, width=10, height=2)
+        self.color2_label.grid(row=6, column=1, pady=5)
+
+    def choose_color1(self):
+        color = colorchooser.askcolor(title="Choose Color 1")[1]
+        if color:
+            self.colour1 = color
+            self.update_color_display()
+
+    def choose_color2(self):
+        color = colorchooser.askcolor(title="Choose Color 2")[1]
+        if color:
+            self.colour2 = color
+            self.update_color_display()
+
+    def update_color_display(self):
+        self.color1_label.config(bg=self.colour1)
+        self.color2_label.config(bg=self.colour2)
+
+    def select_tool(self, tool):
+        self.selected_tool = tool
+        print(self.selected_tool)
+        self.update_button_style(tool)
+
+    def update_button_style(self, selected_tool):
+        for tool, button in self.buttons.items():
+            if tool == selected_tool:
+                button.configure(style="Selected.TButton")
+            else:
+                button.configure(style="TButton")
 
 
 class Painting(ttk.Frame):
@@ -93,6 +141,13 @@ class Painting(ttk.Frame):
         self.triangles = []  # Store references to the triangle items
         
         self.draw_grid(50)
+
+        # Mapping of tools to their respective functions
+        self.tool_functions = {
+            "pen": self.pen,
+            "eraser": self.eraser,
+            # Add other tools and their functions here
+        }
 
     def on_resize(self, event: tk.Event) -> None:
         """
@@ -158,7 +213,6 @@ class Painting(ttk.Frame):
                 X = [i + self.triangle_length / 2 for i in X]
 
             prev_num_cols = columns_per_row[row]
-        
 
     def on_canvas_click(self, event: tk.Event) -> None:
         """
@@ -168,14 +222,26 @@ class Painting(ttk.Frame):
         item = self.canvas.find_closest(event.x, event.y)
         
         # Check if the click was on the background
-        if item[0]== self.background:
-            print(item)
-            # Change the color of the background
-            self.canvas.itemconfig(self.background, fill="green") 
+        if item[0] == self.background:
+            print("Clicked on the background")
         else:
-            # Change the color of the triangle
-            self.canvas.itemconfig(item, fill="red")
-        print(item)
+            tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
+            if tool_function:
+                tool_function(item)
+            else:
+                print(f"No function defined for tool {self.master.toolbar.selected_tool}")
+
+    def pen(self, item) -> None:
+        """
+        Pen tool functionality: Change the color of the triangle to the selected color
+        """
+        self.canvas.itemconfig(item, fill=self.master.toolbar.colour1)  # Use the selected color
+
+    def eraser(self, item) -> None:
+        """
+        Eraser tool functionality: Reset the color of the triangle
+        """
+        self.canvas.itemconfig(item, fill="")  # Reset to default
 
 
 def main() -> None:
@@ -184,7 +250,7 @@ def main() -> None:
     """
     app = App()
     app.mainloop()
-        
+
 
 if __name__ == '__main__':
     main()
