@@ -42,6 +42,24 @@ class NanoList:
                     return
                 current_index -= len(sublist)
             raise IndexError("Index out of range")
+        
+    def _get_rowcol(self, index) -> (int, int):
+        if index < 0:
+            raise IndexError("Negative indexing is not supported")
+        current_index = index
+        for outer_index, sublist in enumerate(self.data):
+            if current_index < len(sublist):
+                return (outer_index, current_index)
+            current_index -= len(sublist)
+        raise IndexError("Index out of range")
+    
+    def knn(self, index, radius) -> [int]:
+        points = []
+        center = self._get_rowcol(index=index)
+        if index%2: 
+            points.append()
+
+
 
     def __str__(self):
         """
@@ -62,6 +80,11 @@ class NanoList:
             self.data[i]= val
 
 # Example usage
-nano_list = NanoList()
 
-print(nano_list)
+l = NanoList()
+l[1] = 8
+
+print(l)
+# print(l._get_rowcol(4))
+print(l[1, 0])
+print(l[2, -1])
