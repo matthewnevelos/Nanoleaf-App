@@ -1,3 +1,5 @@
+from typing import Tuple
+
 class NanoList:
     def __init__(self, shape=[1, 13, 15, 17, 19, 21, 23, 23, 21, 19, 17]):
         """
@@ -9,6 +11,10 @@ class NanoList:
         self.data = [[0] * i for i in self.shape]
 
     def __getitem__(self, index):
+        """
+        Get entry based on either index or [row][col]
+            Although each row is staggered, each row starts at 0 index
+        """
         if isinstance(index, tuple):
             outer_index, inner_index = index
             try:
@@ -26,6 +32,9 @@ class NanoList:
             raise IndexError("Index out of range")
 
     def __setitem__(self, index, value):
+        """
+        Set value with either index or [row][col]
+        """
         if isinstance(index, tuple):
             outer_index, inner_index = index
             try:
@@ -43,7 +52,10 @@ class NanoList:
                 current_index -= len(sublist)
             raise IndexError("Index out of range")
         
-    def _get_rowcol(self, index) -> (int, int):
+    def _get_rowcol(self, index) -> Tuple[int, int]:
+        """
+        return (row, col) for given index
+        """
         if index < 0:
             raise IndexError("Negative indexing is not supported")
         current_index = index
@@ -53,7 +65,10 @@ class NanoList:
             current_index -= len(sublist)
         raise IndexError("Index out of range")
     
-    def knn(self, index, radius) -> [int]:
+    def knn(self, index, radius) -> Tuple[int]:
+        """
+        Return nearest neighbours of a point based on set radius
+        """
         points = []
         center = self._get_rowcol(index=index)
         if index%2: 
@@ -76,6 +91,9 @@ class NanoList:
         return middle
     
     def update(self, values: list):
+        """
+        Deprecated?
+        """
         for i, val in enumerate(values):
             self.data[i]= val
 
