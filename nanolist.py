@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union, List
 
 class NanoList:
     def __init__(self, shape=[1, 13, 15, 17, 19, 21, 23, 23, 21, 19, 17]):
@@ -7,7 +7,7 @@ class NanoList:
         
         0th entry is background colour. Not used for anything other than displaying on tkinter.
         """
-        self.shape = shape
+        self.shape: List[int] = shape
         self.data = [[0] * i for i in self.shape]
 
     def __getitem__(self, index):
@@ -69,10 +69,88 @@ class NanoList:
         """
         Return nearest neighbours of a point based on set radius
         """
-        points = []
-        center = self._get_rowcol(index=index)
-        if index%2: 
-            points.append()
+        relative_points = self._generate_points(radius, flip=self._is_rightsideup())
+        center_pos = self._get_rowcol(index)
+        abs_pos = self._get_abs_pts(center_pos, relative_points)
+
+    def _get_abs_pts(self, center, rel_pts):
+        """
+        Calculates the absolute coordinate of a list of points.
+        Given center, and list of the coordinates relative to center
+        """
+        abs_pts = []
+        (row_center, col_center) = center
+        num_cols_in_center = self.shape[row_center]
+        for pt in rel_pts:
+            (row_rel, col_rel) = pt
+            num_cols_in_rel = self.shape[row_center+row_rel]
+            col_diff = num_cols_in_rel - num_cols_in_center
+            row = row_center + row_rel
+            col = col_center + col_diff + col_rel
+            abs_pts.append((row, col))
+
+
+    def _generate_points(self, r, flip=False):
+        """
+        generate the relative coordinates. 
+        returns a list of the form [(0,0), (1,0), (1,1), (-1,-1)]
+        """
+        if r == 0:
+            return[0]
+        if r == 1:
+            pattern = [1, 3]
+
+        pattern = [2*r+1]*(2*r-1)
+
+        for i, _ in enumerate(pattern):
+            if i < (r-1): 
+                pattern[i] += 2*i
+            if i == (r-1):
+                pattern[i] = pattern[i-1]
+            elif i > (r-1):
+                pattern[i] = pattern[i-1] - 2
+        
+        if flip:
+            pattern.reverse()
+
+        return pattern
+
+
+    def _is_rightsideup(self, index: Union[int, Tuple[int, int]]) -> bool:
+        """
+        Checks if a triangle is rightside up
+        """
+        # Its only being called once, should I keep check for (row, col)?
+        if isinstance(index, int):
+            row, col = self._get_rowcol(index)
+        else: (row, col) = index # <- should never be used
+
+        if row < 6: growing = True
+        else: growing = False
+
+        if (col + growing) % 2: return True
+        else: return False
+
+    def _is_exist(self, pos: Tuple[int, int]) -> bool:
+        """
+        Checks if triangle exists from a given (row, col) coordinate
+        """
+        (row, col) = pos
+
+        if row < 0 or col < 0:
+            return False
+
+        if row > len(self.shape)():
+            return False
+
+        if col >= self.shape[row]:
+            return False
+        
+        return True
+
+            
+
+
 
 
 

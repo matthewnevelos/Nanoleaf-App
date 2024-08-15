@@ -127,7 +127,23 @@ class Painting(ttk.Frame):
 
     def draw_grid(self, triangle_size: int) -> None:
         """
-        Draw a grid of triangles on the canvas.
+        Background is a rectangle
+        Draw triangles row by row in the pattern used in UofC.
+        (0,0) is top left
+
+        vertices are numbered as following
+            2       1 ______ 3
+            /\        \    /
+           /  \        \  /
+        1 /____\ 3      \/2
+
+        x-coordinates increment by half the length of the triangle
+        y-coordinates flip 1,2 <-> 3
+
+        The drawing will be offset such that there is equal whitespace above and below
+
+        If growing, the first triangle will be upward
+        The first and last triangle of a row will be the same orientation
         """
         self.canvas.delete("all")
         self.background = self.canvas.create_rectangle(0, 0, self.canvas_width, self.canvas_height, outline="", fill="blue")
