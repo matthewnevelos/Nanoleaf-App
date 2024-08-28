@@ -1,14 +1,17 @@
 from typing import Tuple, Union, List
 
+# TODO Add colours to __str__
+
 class NanoList:
-    def __init__(self, shape=[1, 13, 15, 17, 19, 21, 23, 23, 21, 19, 17]):
+    def __init__(self, canvas, shape=[1, 13, 15, 17, 19, 21, 23, 23, 21, 19, 17]):
         """
         Container which will be used for storing colours of the NanoLeaf.
         
         0th entry is background colour. Not used for anything other than displaying on tkinter.
         """
+        self.canvas = canvas
         self.shape: List[int] = shape
-        self.data = [[0] * i for i in self.shape]
+        self.data = [["#000"] * i for i in self.shape]
 
     def __getitem__(self, index):
         """
@@ -35,6 +38,7 @@ class NanoList:
         """
         Set value with either index or [row][col]
         """
+        if isinstance(index, tuple) and len(index)==1: index = index[0]
         if isinstance(index, tuple):
             outer_index, inner_index = index
             try:
@@ -42,6 +46,7 @@ class NanoList:
             except IndexError:
                 raise IndexError(f"Index {inner_index} out of range for sublist {outer_index}")
         else:
+            index -=1
             if index < 0:
                 raise IndexError("Negative indexing is not supported")
             current_index = index
@@ -65,13 +70,28 @@ class NanoList:
             current_index -= len(sublist)
         raise IndexError("Index out of range")
     
+    def _get_index(self, coord: Tuple[int, int]) -> int:
+        (row, col) = coord
+        index = 1
+        for i in range(row):
+            index += self.shape[i]
+        index += col
+        return index
+    
     def knn(self, index, radius) -> Tuple[int]:
         """
         Return nearest neighbours of a point based on set radius
+        radius = 0: [0,0]
+        radius = 1: [0,0, ]
         """
-        relative_points = self._generate_points(radius, flip=self._is_rightsideup())
+        index = index[0]
+        relative_points = self._generate_points(radius, flip=self._is_rightsideup(index))
         center_pos = self._get_rowcol(index)
+        print("relative_points")
+        print(relative_points)
+        relative_points = [()]
         abs_pos = self._get_abs_pts(center_pos, relative_points)
+        return abs_pos
 
     def _get_abs_pts(self, center, rel_pts):
         """
@@ -87,7 +107,9 @@ class NanoList:
             col_diff = num_cols_in_rel - num_cols_in_center
             row = row_center + row_rel
             col = col_center + col_diff + col_rel
-            abs_pts.append((row, col))
+            abs_pts.append((row+col))
+
+        return abs_pts
 
 
     def _generate_points(self, r, flip=False):
@@ -148,10 +170,6 @@ class NanoList:
         
         return True
 
-            
-
-
-
 
 
     def __str__(self):
@@ -168,19 +186,9 @@ class NanoList:
 
         return middle
     
-    def update(self, values: list):
-        """
-        Deprecated?
-        """
-        for i, val in enumerate(values):
-            self.data[i]= val
+    def update(self):
+        for row_i, row in enumerate(self.data):
+            for col_i, colour in enumerate(row):
+                index = self._get_index((row_i, col_i))
+                self.canvas.itemconfig(index, fill=colour)
 
-# Example usage
-
-l = NanoList()
-l[1] = 8
-
-print(l)
-# print(l._get_rowcol(4))
-print(l[1, 0])
-print(l[2, -1])

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, colorchooser
 from PIL import Image, ImageTk
+from nanolist import NanoList
 
 class App(tk.Tk):
     """
@@ -28,11 +29,14 @@ class App(tk.Tk):
 class ToolSideBar(ttk.Frame):
     def __init__(self, parent: tk.Tk) -> None:
         super().__init__(parent, width=150)
+
+        # Initlize variables
         self.icons = {}
         self.buttons = {}
         self.colour1 = "#fff"
         self.colour2 = "#000"
         self.selected_tool = None
+        self.radius = tk.IntVar()
 
         # Define styles for selected and unselected buttons
         style = ttk.Style()
@@ -41,7 +45,7 @@ class ToolSideBar(ttk.Frame):
         style.configure("Selected.TButton", background="#d3d3d3")
 
         # Create tools and color buttons
-        self.create_color_buttons()
+        self.create_tool_options()
         self.create_tools()
 
         # Initially select pen
@@ -54,38 +58,46 @@ class ToolSideBar(ttk.Frame):
                 image = Image.open(f"icons/{icon}.png").resize((50, 50))
                 photo = ImageTk.PhotoImage(image)
                 button = ttk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon))
-                button.grid(row=i // 2 + 2, column=i % 2, padx=5, pady=5)  # Adjust row to start below color buttons
+                button.grid(row=i // 2 + 3, column=i % 2, padx=5, pady=5)  # Adjust row to start below color buttons
                 self.icons[icon] = photo  # Store reference
                 self.buttons[icon] = button
             except FileNotFoundError:
                 print(f"Icon {icon}.png not found in the 'icons/' directory.")
 
-    def create_color_buttons(self) -> None:
-        self.color1_button = tk.Button(self, bg=self.colour1, width=10, height=2, command=self.choose_color1)
+    def create_tool_options(self) -> None:
+        """
+        Create button to select colours, and scale to change radius of brush
+        """
+
+        def choose_color1() -> None:
+            color = colorchooser.askcolor(title="Choose Color 1")[1]
+            if color:
+                self.colour1 = color
+                self.color1_button.config(bg=self.colour1)
+
+        def choose_color2() -> None:
+            color = colorchooser.askcolor(title="Choose Color 2")[1]
+            if color:
+                self.colour2 = color
+                self.color2_button.config(bg=self.colour2)
+
+        self.color1_button = tk.Button(self, bg=self.colour1, width=10, height=2, command=choose_color1)
         self.color1_button.grid(row=0, column=0, pady=5)
 
-        self.color2_button = tk.Button(self, bg=self.colour2, width=10, height=2, command=self.choose_color2)
+        self.color2_button = tk.Button(self, bg=self.colour2, width=10, height=2, command=choose_color2)
         self.color2_button.grid(row=0, column=1, pady=5)
 
-    def choose_color1(self) -> None:
-        color = colorchooser.askcolor(title="Choose Color 1")[1]
-        if color:
-            self.colour1 = color
-            self.color1_button.config(bg=self.colour1)
-
-    def choose_color2(self) -> None:
-        color = colorchooser.askcolor(title="Choose Color 2")[1]
-        if color:
-            self.colour2 = color
-            self.color2_button.config(bg=self.colour2)
+        self.radius_slider = tk.Scale(self, from_=0, to=5, orient=tk.HORIZONTAL, variable=self.radius, label="Radius:")
+        self.radius_slider.grid(row=1, columnspan=2)
 
     def select_tool(self, tool: str) -> None:
+        # Set the selected tool
         self.selected_tool = tool
-        self.update_button_style(tool)
+        
+        # Update the button styles
+        for t, button in self.buttons.items():
+            button.configure(style="Selected.TButton" if t == tool else "TButton")
 
-    def update_button_style(self, selected_tool: str) -> None:
-        for tool, button in self.buttons.items():
-            button.configure(style="Selected.TButton" if tool == selected_tool else "TButton")
 
 
 class Painting(ttk.Frame):
@@ -97,10 +109,11 @@ class Painting(ttk.Frame):
         
         self.canvas_width = 600
         self.canvas_height = 600
-        self.brush_color = "black"
         
         self.canvas = tk.Canvas(self, bg="blue", width=self.canvas_width, height=self.canvas_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        self.nanolist = NanoList(self.canvas)
         
         self.bind("<Configure>", self.on_resize)
         self.canvas.bind("<Button-1>", self.on_canvas_click)  # Bind left-click event
@@ -113,6 +126,7 @@ class Painting(ttk.Frame):
         self.tool_functions = {
             "pen": self.pen,
             "eraser": self.eraser,
+            "pencil": self.pencil
             # Add other tools and their functions here
         }
 
@@ -176,26 +190,46 @@ class Painting(ttk.Frame):
         Handles canvas click event
         """
         item = self.canvas.find_closest(event.x, event.y)
+        colour1 = self.master.toolbar.colour1
+        colour2 = self.master.toolbar.colour2
+        radius = self.master.toolbar.radius
         if item[0] != self.background:
             tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
             if tool_function:
-                tool_function(item)
+                tool_function(item, colour1=colour1, colour2=colour2, radius=radius)
             else:
                 print(f"No function defined for tool {self.master.toolbar.selected_tool}")
+        elif item[0] == self.background:
+            # Set background
+            pass
 
-    def pen(self, item: int) -> None:
+    def pen(self, item: int, **kwargs) -> None:
         """
         Pen tool functionality: Change the color of the triangle to the selected color
         """
-        self.canvas.itemconfig(item, fill=self.master.toolbar.colour1)
+        self.nanolist[item] = self.master.toolbar.colour1
+        self.nanolist.update()
 
-    def eraser(self, item: int) -> None:
+    def eraser(self, item: int, **kwargs) -> None:
         """
         Eraser tool functionality: Reset the color of the triangle
         """
-        self.canvas.itemconfig(item, fill="#000")
+        radius = kwargs["radius"]
+        self.nanolist[item] = "#fff"
+        self.nanolist.update()
+        print(self.nanolist)
 
-    # def _knn(self, item: int) -> [int]:
+    def pencil(self, item: int, **kwargs) -> None:
+        """
+        pencil. atm it is spraycan
+        """
+        radius = kwargs['radius']
+        k = NanoList()
+        pts = k.kn
+        (item, radius)
+        for x in pts:
+            self.canvas.itemconfig(x, fill="#0FF")
+        
 
 
 
