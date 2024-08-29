@@ -121,7 +121,8 @@ class Painting(ttk.Frame):
 
         self.triangles = []  # Store references to the triangle items
         
-        self.draw_grid(50)
+        self.columns_per_row = [13, 15, 17, 19, 21, 23, 23, 21, 19, 17]  # Grid layout
+        self.draw_grid()
 
         # Mapping of tools to their respective functions
         self.tool_functions = {
@@ -133,45 +134,39 @@ class Painting(ttk.Frame):
 
     def on_resize(self, event: tk.Event) -> None:
         """
-        Resize the canvas to fit drawing in new window size
+        Resize the canvas to fit drawing in new window size and update the grid to fit the window
         """
         toolbar_width = self.master.toolbar.winfo_width()
         self.canvas_width = self.master.winfo_width() - toolbar_width
         self.canvas_height = self.master.winfo_height()
         self.canvas.config(width=self.canvas_width, height=self.canvas_height)
+        self.canvas.coords(self.background, 0, 0, self.canvas_width, self.canvas_height)
+        
+        # Recalculate the triangle size and update the grid
+        self.update_grid()
 
-    def draw_grid(self, triangle_size: int) -> None:
+    def calculate_max_triangle_size(self) -> int:
         """
-        Background is a rectangle
-        Draw triangles row by row in the pattern used in UofC.
-        (0,0) is top left
-
-        vertices are numbered as following
-            2       1 ______ 3
-            /\        \    /
-           /  \        \  /
-        1 /____\ 3      \/2
-
-        x-coordinates increment by half the length of the triangle
-        y-coordinates flip 1,2 <-> 3
-
-        The drawing will be offset such that there is equal whitespace above and below
-
-        If growing, the first triangle will be upward
-        The first and last triangle of a row will be the same orientation
+        Calculate the maximum triangle size that allows the grid to fit within the canvas.
         """
-        self.canvas.delete("all")
+        max_width = self.canvas_width / (max(self.columns_per_row)+4) * 2
+        max_height = self.canvas_height / (len(self.columns_per_row)+2) * (2 / (3**0.5))
+        return min(max_width, max_height)
+
+    def draw_grid(self) -> None:
+        """
+        Draw triangles row by row in the pattern used in UofC, ensuring they fit within the canvas.
+        """
         self.background = self.canvas.create_rectangle(0, 0, self.canvas_width, self.canvas_height, outline="", fill="blue")
 
         prev_num_cols = 0
-        self.triangle_length = triangle_size
+        self.triangle_length = self.calculate_max_triangle_size()
         self.triangle_height = self.triangle_length * (3**0.5) / 2
-        columns_per_row = [13, 15, 17, 19, 21, 23, 23, 21, 19, 17]
 
-        for row, num_cols in enumerate(columns_per_row):
+        for row, num_cols in enumerate(self.columns_per_row):
             growing = num_cols > prev_num_cols
             x_margin = (self.canvas_width - num_cols * self.triangle_length / 2) / 2
-            y_margin = (self.canvas_height - len(columns_per_row) * self.triangle_height) / 2
+            y_margin = (self.canvas_height - len(self.columns_per_row) * self.triangle_height) / 2
             
             y_lower = y_margin + self.triangle_height * (row + 1)
             y_upper = y_margin + self.triangle_height * row
@@ -182,6 +177,34 @@ class Painting(ttk.Frame):
                 Y = [y_lower, y_upper, y_lower] if (col + growing) % 2 == 1 else [y_upper, y_lower, y_upper]
                 triangle = self.canvas.create_polygon(list(zip(X, Y)), outline="white", fill="")
                 self.triangles.append(triangle)
+                X = [i + self.triangle_length / 2 for i in X]
+
+            prev_num_cols = num_cols
+
+    def update_grid(self) -> None:
+        """
+        Update the positions and sizes of the existing triangles to fit within the resized canvas.
+        """
+        prev_num_cols = 0
+        self.triangle_length = self.calculate_max_triangle_size()
+        self.triangle_height = self.triangle_length * (3**0.5) / 2
+        triangle_index = 0
+
+        for row, num_cols in enumerate(self.columns_per_row):
+            growing = num_cols > prev_num_cols
+            x_margin = (self.canvas_width - num_cols * self.triangle_length / 2) / 2
+            y_margin = (self.canvas_height - len(self.columns_per_row) * self.triangle_height) / 2
+            
+            y_lower = y_margin + self.triangle_height * (row + 1)
+            y_upper = y_margin + self.triangle_height * row
+
+            X = [x_margin, x_margin + self.triangle_length / 2, x_margin + self.triangle_length]
+
+            for col in range(num_cols):
+                Y = [y_lower, y_upper, y_lower] if (col + growing) % 2 == 1 else [y_upper, y_lower, y_upper]
+                coords = list(zip(X, Y))
+                self.canvas.coords(self.triangles[triangle_index], *sum(coords, ()))
+                triangle_index += 1
                 X = [i + self.triangle_length / 2 for i in X]
 
             prev_num_cols = num_cols
@@ -222,7 +245,7 @@ class Painting(ttk.Frame):
 
     def pencil(self, item: int, **kwargs) -> None:
         """
-        pencil. atm it is spraycan
+        Pencil tool functionality
         """
         radius = kwargs['radius']
         k = NanoList()
@@ -230,6 +253,7 @@ class Painting(ttk.Frame):
         (item, radius)
         for x in pts:
             self.canvas.itemconfig(x, fill="#0FF")
+
         
 
 
