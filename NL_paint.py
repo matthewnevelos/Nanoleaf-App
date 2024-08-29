@@ -110,10 +110,11 @@ class Painting(ttk.Frame):
         self.canvas_width = 600
         self.canvas_height = 600
         
-        self.canvas = tk.Canvas(self, bg="blue", width=self.canvas_width, height=self.canvas_height)
+        self.canvas = tk.Canvas(self, bg="red", width=self.canvas_width, height=self.canvas_height)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         self.nanolist = NanoList(self.canvas)
+        self.after(0, self.nanolist.update)
         
         self.bind("<Configure>", self.on_resize)
         self.canvas.bind("<Button-1>", self.on_canvas_click)  # Bind left-click event

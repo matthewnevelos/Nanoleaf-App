@@ -12,6 +12,10 @@ class NanoList:
         self.canvas = canvas
         self.shape: List[int] = shape
         self.data = [["#000"] * i for i in self.shape]
+        self.data[0][0] = "#555"
+        self.history = [] # Previous edits, Last entry is most recent
+        self.future = [] # Previous undos, Last entry is most recent
+        self.forward = True 
 
     def __getitem__(self, index):
         """
@@ -186,9 +190,31 @@ class NanoList:
 
         return middle
     
-    def update(self):
+    def update(self, forward=True):
+        if not self.forward and forward: # If previous update was undo/redo and current is novel update, clear self.future
+            self.future.clear()
+
+        self.forward = forward
+        if forward:
+            self.history.append(self.data)
+            self.history = self.history[-10:] # Only keep 10 most recent
+
         for row_i, row in enumerate(self.data):
             for col_i, colour in enumerate(row):
                 index = self._get_index((row_i, col_i))
                 self.canvas.itemconfig(index, fill=colour)
+
+    def undo(self):
+        try:
+            self.future.append(self.history.pop())
+            self.update(forward=False)
+        except IndexError:
+            print("Nothing to undo")
+
+    def redo(self):
+        if not self.forward: # executes only if last update was an undo
+            try:
+                self.history.append(self.future.pop())
+            except IndexError:
+                print("Nothing to redo")
 
