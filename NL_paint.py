@@ -114,7 +114,6 @@ class Painting(ttk.Frame):
         self.columns_per_row = [13, 15, 17, 19, 21, 23, 23, 21, 19, 17]  # Grid layout
         self.draw_grid()
 
-        # Mapping of tools to their respective functions
         self.tool_functions = {
             "blend": self.blend,
             "bucket": self.bucket,
@@ -122,10 +121,9 @@ class Painting(ttk.Frame):
             "marker": self.marker,
             "pencil": self.pencil,
             "spray": self.spray
-            # Add other tools and their functions here
         }
 
-        self.current_tool_function = None  # To store the currently used tool function
+        self.current_tool_function = None
 
     def on_resize(self, event: tk.Event) -> None:
         """
@@ -218,8 +216,8 @@ class Painting(ttk.Frame):
             else:
                 print(f"No function defined for tool {self.master.toolbar.selected_tool}")
         elif item[0] == self.background:
-            # Set background
-            pass
+            self.nanolist[item] = self.master.toolbar.colour1
+            self.nanolist.update()
 
     def on_canvas_drag(self, event: tk.Event) -> None:
         """
@@ -231,12 +229,16 @@ class Painting(ttk.Frame):
             radius = self.master.toolbar.radius
             if item[0] != self.background:
                 self.current_tool_function(item, colour1=colour1, radius=radius)
+            elif item[0] == self.background:
+                self.nanolist[item] = self.master.toolbar.colour1
+                self.nanolist.update()
+
 
     def on_canvas_release(self, event: tk.Event) -> None:
         """
         Handles mouse button release after dragging
         """
-        self.current_tool_function = None  # Reset current tool function
+        self.current_tool_function = None
 
     def blend(self, item: int, **kwargs) -> None:
         pass
@@ -262,7 +264,6 @@ class Painting(ttk.Frame):
         """
         self.nanolist[item] = self.master.toolbar.colour1
         self.nanolist.update()
-        
 
     def spray(self, item: int, **kwargs) -> None:
         """
@@ -275,10 +276,6 @@ class Painting(ttk.Frame):
         for x in pts:
             self.nanolist[x] = self.master.toolbar.colour1
             self.canvas.itemconfig(x, fill="#0FF")
-
-        
-
-
 
 
 def main() -> None:
