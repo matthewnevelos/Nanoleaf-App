@@ -34,15 +34,8 @@ class ToolSideBar(ttk.Frame):
         self.icons = {}
         self.buttons = {}
         self.colour1 = "#fff"
-        self.colour2 = "#000"
         self.selected_tool = None
         self.radius = tk.IntVar()
-
-        # Define styles for selected and unselected buttons
-        style = ttk.Style()
-        style.configure("TButton", padding=6)
-        style.map("TButton", background=[("active", "#ececec")])
-        style.configure("Selected.TButton", background="#d3d3d3")
 
         # Create tools and color buttons
         self.create_tool_options()
@@ -57,7 +50,7 @@ class ToolSideBar(ttk.Frame):
             try:
                 image = Image.open(f"icons/{icon}.png").resize((50, 50))
                 photo = ImageTk.PhotoImage(image)
-                button = ttk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon))
+                button = tk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon))
                 button.grid(row=i // 2 + 3, column=i % 2, padx=5, pady=5)  # Adjust row to start below color buttons
                 self.icons[icon] = photo  # Store reference
                 self.buttons[icon] = button
@@ -75,17 +68,8 @@ class ToolSideBar(ttk.Frame):
                 self.colour1 = color
                 self.color1_button.config(bg=self.colour1)
 
-        def choose_color2() -> None:
-            color = colorchooser.askcolor(title="Choose Color 2")[1]
-            if color:
-                self.colour2 = color
-                self.color2_button.config(bg=self.colour2)
-
         self.color1_button = tk.Button(self, bg=self.colour1, width=10, height=2, command=choose_color1)
         self.color1_button.grid(row=0, column=0, pady=5)
-
-        self.color2_button = tk.Button(self, bg=self.colour2, width=10, height=2, command=choose_color2)
-        self.color2_button.grid(row=0, column=1, pady=5)
 
         self.radius_slider = tk.Scale(self, from_=0, to=5, orient=tk.HORIZONTAL, variable=self.radius, label="Radius:")
         self.radius_slider.grid(row=1, columnspan=2)
@@ -93,10 +77,12 @@ class ToolSideBar(ttk.Frame):
     def select_tool(self, tool: str) -> None:
         # Set the selected tool
         self.selected_tool = tool
-        
-        # Update the button styles
+
         for t, button in self.buttons.items():
-            button.configure(style="Selected.TButton" if t == tool else "TButton")
+            if t == tool:
+                button.config(bg="green")
+            else:
+                button.config(bg="SystemButtonFace")
 
 
 
@@ -218,12 +204,11 @@ class Painting(ttk.Frame):
         """
         item = self.canvas.find_closest(event.x, event.y)
         colour1 = self.master.toolbar.colour1
-        colour2 = self.master.toolbar.colour2
         radius = self.master.toolbar.radius
         if item[0] != self.background:
             tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
             if tool_function:
-                tool_function(item, colour1=colour1, colour2=colour2, radius=radius)
+                tool_function(item, colour1=colour1, radius=radius)
             else:
                 print(f"No function defined for tool {self.master.toolbar.selected_tool}")
         elif item[0] == self.background:
