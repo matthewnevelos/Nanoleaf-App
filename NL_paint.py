@@ -36,6 +36,8 @@ class ToolSideBar(ttk.Frame):
         self.colour1 = "hot pink"
         self.selected_tool = None
         self.radius = tk.IntVar()
+        self.tolerance = tk.DoubleVar()
+        self.strength = tk.DoubleVar()
 
         # Create tools and color buttons
         self.create_tool_options()
@@ -51,7 +53,7 @@ class ToolSideBar(ttk.Frame):
                 image = Image.open(f"icons/{icon}.png").resize((50, 50))
                 photo = ImageTk.PhotoImage(image)
                 button = tk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon), relief="groove", borderwidth=2)
-                button.grid(row=i // 2 + 3, column=i % 2, padx=5, pady=5)  # Adjust row to start below color buttons
+                button.grid(row=i // 2 + 2, column=i % 2, padx=5, pady=5)  # Adjust row to start below color buttons
                 self.icons[icon] = photo  # Store reference
                 self.buttons[icon] = button
             except FileNotFoundError:
@@ -68,13 +70,19 @@ class ToolSideBar(ttk.Frame):
                 self.colour1 = color
                 self.color1_button.config(bg=self.colour1)
 
-        self.colour1_frame = tk.Frame(self, bg="black", borderwidth=2, relief="flat")
-        self.color1_button = tk.Button(self.colour1_frame, bg=self.colour1, width=15, height=2, command=choose_color1, borderwidth=5, border=5, relief="flat")
+        # Colour picker
+        self.colour1_frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
         self.colour1_frame.grid(row=0, column=0, pady=5, columnspan=2)
+        self.color1_button = tk.Button(self.colour1_frame, bg=self.colour1, width=15, height=2, command=choose_color1, borderwidth=5, border=5, relief="flat")
         self.color1_button.pack()
 
-        self.radius_slider = tk.Scale(self, from_=0, to=5, orient=tk.HORIZONTAL, variable=self.radius, label="Radius:")
-        self.radius_slider.grid(row=1, columnspan=2)
+        # Radius, tolerance, strnegth
+        options = {"radius":[5, self.radius], "tolerance":[1, self.tolerance], "strength":[100, self.strength]}
+        for i, option in enumerate(options):
+            frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
+            frame.grid(row=5+i, column=0, columnspan=2, pady=5)
+            slider = tk.Scale(frame, from_=0, to=options[option][0], orient=tk.HORIZONTAL, variable=options[option][1], label=option)
+            slider.pack()
 
     def select_tool(self, tool: str) -> None:
         # Set the selected tool
@@ -255,7 +263,7 @@ class Painting(ttk.Frame):
         Eraser tool functionality: Reset the color of the triangle
         """
         radius = kwargs["radius"]
-        self.nanolist[item] = "#fff"
+        self.nanolist[item] = "#ffffff"
         self.nanolist.update()
 
     def pencil(self, item: int, **kwargs) -> None:
@@ -275,7 +283,7 @@ class Painting(ttk.Frame):
         (item, radius)
         for x in pts:
             self.nanolist[x] = self.master.toolbar.colour1
-            self.canvas.itemconfig(x, fill="#0FF")
+            self.canvas.itemconfig(x, fill="#00FFFFF")
 
 
 def main() -> None:
