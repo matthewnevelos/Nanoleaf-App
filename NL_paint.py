@@ -106,6 +106,8 @@ class Painting(ttk.Frame):
         
         self.bind("<Configure>", self.on_resize)
         self.canvas.bind("<Button-1>", self.on_canvas_click)  # Bind left-click event
+        self.canvas.bind("<B1-Motion>", self.on_canvas_drag)  # Bind dragging event
+        self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)  # Bind release event
 
         self.triangles = []  # Store references to the triangle items
         
@@ -122,6 +124,8 @@ class Painting(ttk.Frame):
             "spray": self.spray
             # Add other tools and their functions here
         }
+
+        self.current_tool_function = None  # To store the currently used tool function
 
     def on_resize(self, event: tk.Event) -> None:
         """
@@ -208,14 +212,31 @@ class Painting(ttk.Frame):
         colour1 = self.master.toolbar.colour1
         radius = self.master.toolbar.radius
         if item[0] != self.background:
-            tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
-            if tool_function:
-                tool_function(item, colour1=colour1, radius=radius)
+            self.current_tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
+            if self.current_tool_function:
+                self.current_tool_function(item, colour1=colour1, radius=radius)
             else:
                 print(f"No function defined for tool {self.master.toolbar.selected_tool}")
         elif item[0] == self.background:
             # Set background
             pass
+
+    def on_canvas_drag(self, event: tk.Event) -> None:
+        """
+        Handles dragging motion over the canvas
+        """
+        if self.current_tool_function:
+            item = self.canvas.find_closest(event.x, event.y)
+            colour1 = self.master.toolbar.colour1
+            radius = self.master.toolbar.radius
+            if item[0] != self.background:
+                self.current_tool_function(item, colour1=colour1, radius=radius)
+
+    def on_canvas_release(self, event: tk.Event) -> None:
+        """
+        Handles mouse button release after dragging
+        """
+        self.current_tool_function = None  # Reset current tool function
 
     def blend(self, item: int, **kwargs) -> None:
         pass
