@@ -33,7 +33,7 @@ class ToolSideBar(ttk.Frame):
         # Initlize variables
         self.icons = {}
         self.buttons = {}
-        self.colour1 = "#fff"
+        self.colour1 = "hot pink"
         self.selected_tool = None
         self.radius = tk.IntVar()
 
@@ -50,7 +50,7 @@ class ToolSideBar(ttk.Frame):
             try:
                 image = Image.open(f"icons/{icon}.png").resize((50, 50))
                 photo = ImageTk.PhotoImage(image)
-                button = tk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon))
+                button = tk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon), relief="groove", borderwidth=2)
                 button.grid(row=i // 2 + 3, column=i % 2, padx=5, pady=5)  # Adjust row to start below color buttons
                 self.icons[icon] = photo  # Store reference
                 self.buttons[icon] = button
@@ -68,8 +68,10 @@ class ToolSideBar(ttk.Frame):
                 self.colour1 = color
                 self.color1_button.config(bg=self.colour1)
 
-        self.color1_button = tk.Button(self, bg=self.colour1, width=10, height=2, command=choose_color1)
-        self.color1_button.grid(row=0, column=0, pady=5)
+        self.colour1_frame = tk.Frame(self, bg="black", borderwidth=2, relief="flat")
+        self.color1_button = tk.Button(self.colour1_frame, bg=self.colour1, width=15, height=2, command=choose_color1, borderwidth=5, border=5, relief="flat")
+        self.colour1_frame.grid(row=0, column=0, pady=5, columnspan=2)
+        self.color1_button.pack()
 
         self.radius_slider = tk.Scale(self, from_=0, to=5, orient=tk.HORIZONTAL, variable=self.radius, label="Radius:")
         self.radius_slider.grid(row=1, columnspan=2)
