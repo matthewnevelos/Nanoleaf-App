@@ -49,10 +49,10 @@ class ToolSideBar(ttk.Frame):
         self.create_tools()
 
         # Initially select pen
-        self.select_tool("pen")
+        self.select_tool("pencil")
 
     def create_tools(self) -> None:
-        icons = ["blend", "bucket", "dropper", "eraser", "gradient", "line", "magnify", "pen", "pencil"]
+        icons = ["blend", "bucket", "dropper", "marker", "pencil", "spray"]
         for i, icon in enumerate(icons):
             try:
                 image = Image.open(f"icons/{icon}.png").resize((50, 50))
@@ -126,9 +126,12 @@ class Painting(ttk.Frame):
 
         # Mapping of tools to their respective functions
         self.tool_functions = {
-            "pen": self.pen,
-            "eraser": self.eraser,
-            "pencil": self.pencil
+            "blend": self.blend,
+            "bucket": self.bucket,
+            "dropper": self.dropper,
+            "marker": self.marker,
+            "pencil": self.pencil,
+            "spray": self.spray
             # Add other tools and their functions here
         }
 
@@ -227,31 +230,42 @@ class Painting(ttk.Frame):
             # Set background
             pass
 
-    def pen(self, item: int, **kwargs) -> None:
-        """
-        Pen tool functionality: Change the color of the triangle to the selected color
-        """
-        self.nanolist[item] = self.master.toolbar.colour1
-        self.nanolist.update()
+    def blend(self, item: int, **kwargs) -> None:
+        pass
 
-    def eraser(self, item: int, **kwargs) -> None:
+    def bucket(self, item: int, **kwargs) -> None:
+        pass
+
+    def dropper(self, item: int, **kwargs) -> None:
+        pass
+
+    def marker(self, item: int, **kwargs) -> None:
         """
+        TODO**
         Eraser tool functionality: Reset the color of the triangle
         """
         radius = kwargs["radius"]
         self.nanolist[item] = "#fff"
         self.nanolist.update()
-        print(self.nanolist)
 
     def pencil(self, item: int, **kwargs) -> None:
         """
-        Pencil tool functionality
+        Pencil tool functionality: Change the color of the triangle to the selected color
+        """
+        self.nanolist[item] = self.master.toolbar.colour1
+        self.nanolist.update()
+        
+
+    def spray(self, item: int, **kwargs) -> None:
+        """
+        Spraypaint tool functionality
         """
         radius = kwargs['radius']
         k = NanoList()
         pts = k.kn
         (item, radius)
         for x in pts:
+            self.nanolist[x] = self.master.toolbar.colour1
             self.canvas.itemconfig(x, fill="#0FF")
 
         
