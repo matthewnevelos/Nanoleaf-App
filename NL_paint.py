@@ -90,12 +90,26 @@ class ToolSideBar(ttk.Frame):
     def select_tool(self, tool: str) -> None:
         self.selected_tool = tool
 
+        enabled_options = {"blend":["radius", "strength"],
+                           "bucket":["tolerance"],
+                           "dropper":[],
+                           "marker":["radius", "strength"],
+                           "pencil":["radius"],
+                           "spray":["radius", "strength"]}
+        
+        for option in self.options:
+            self.options[option].set(0)
+            if option in enabled_options[tool]:
+                self.options[option].config(state=tk.NORMAL, bg="SystemButtonFace")
+            else:
+                self.options[option].config(state=tk.DISABLED, bg="gray50")
+
+
         for t, button in self.buttons.items():
             if t == tool:
                 button.config(bg="green")
             else:
                 button.config(bg="SystemButtonFace")
-
 
 
 class Painting(ttk.Frame):
@@ -246,17 +260,20 @@ class Painting(ttk.Frame):
                 self.nanolist[item] = self.master.toolbar.colour1
                 self.nanolist.update()
 
-
     def on_canvas_release(self, event: tk.Event) -> None:
         """
         Handles mouse button release after dragging
         """
         self.current_tool_function = None
 
+
     def blend(self, item: int, **kwargs) -> None:
+        radius = kwargs["radius"]
+        strength = kwargs["strength"]
         pass
 
     def bucket(self, item: int, **kwargs) -> None:
+        tolerance = kwargs["tolerance"]
         pass
 
     def dropper(self, item: int, **kwargs) -> None:
@@ -268,6 +285,7 @@ class Painting(ttk.Frame):
         Eraser tool functionality: Reset the color of the triangle
         """
         radius = kwargs["radius"]
+        strength = kwargs["strength"]
         self.nanolist[item] = "#ffffff"
         self.nanolist.update()
 
@@ -275,6 +293,7 @@ class Painting(ttk.Frame):
         """
         Pencil tool functionality: Change the color of the triangle to the selected color
         """
+        radius = kwargs["radius"]
         self.nanolist[item] = self.master.toolbar.colour1
         self.nanolist.update()
 
@@ -282,7 +301,8 @@ class Painting(ttk.Frame):
         """
         Spraypaint tool functionality
         """
-        radius = kwargs['radius']
+        radius = kwargs["radius"]
+        strength = kwargs["strength"]
         k = NanoList()
         pts = k.kn
         (item, radius)
