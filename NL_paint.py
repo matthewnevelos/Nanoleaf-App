@@ -40,7 +40,7 @@ class ToolSideBar(ttk.Frame):
         self.options = {}
         self.colour1 = "hot pink"
 
-        # Create tools and color buttons
+        # Create tools and colour buttons
         self.create_tool_options()
         self.create_tools()
 
@@ -54,7 +54,7 @@ class ToolSideBar(ttk.Frame):
                 image = Image.open(f"icons/{icon}.png").resize((50, 50))
                 photo = ImageTk.PhotoImage(image)
                 button = tk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon), relief="groove", borderwidth=2)
-                button.grid(row=i // 2 + 2, column=i % 2, padx=5, pady=5)  # Adjust row to start below color buttons
+                button.grid(row=i // 2 + 2, column=i % 2, padx=5, pady=5)  # Adjust row to start below colour buttons
                 self.icons[icon] = photo  # Store reference
                 self.buttons[icon] = button
             except FileNotFoundError:
@@ -65,17 +65,17 @@ class ToolSideBar(ttk.Frame):
         Create button to select colours, and scale to change radius of brush
         """
 
-        def choose_color1() -> None:
-            color = colorchooser.askcolor(title="Choose Color 1")[1]
-            if color:
-                self.colour1 = color
-                self.color1_button.config(bg=self.colour1)
+        def choose_colour1() -> None:
+            colour = colorchooser.askcolor(title="Choose Colour 1")[1]
+            if colour:
+                self.colour1 = colour
+                self.colour1_button.config(bg=self.colour1)
 
         # Colour picker
         self.colour1_frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
         self.colour1_frame.grid(row=0, column=0, pady=5, columnspan=2)
-        self.color1_button = tk.Button(self.colour1_frame, bg=self.colour1, width=15, height=2, command=choose_color1, borderwidth=5, border=5, relief="flat")
-        self.color1_button.pack()
+        self.colour1_button = tk.Button(self.colour1_frame, bg=self.colour1, width=15, height=2, command=choose_colour1, borderwidth=5, border=5, relief="flat")
+        self.colour1_button.pack()
 
         # Radius, tolerance, strnegth
         # {tool: [max val, resolution], ...}
@@ -236,7 +236,7 @@ class Painting(ttk.Frame):
         op_params = {x:self.master.toolbar.options[x].get() for x in self.master.toolbar.options}
         op_params["colour1"] = self.master.toolbar.colour1
 
-        if item[0] != self.background:
+        if item[0] != self.background or self.master.toolbar.selected_tool=="dropper":
             self.current_tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
             if self.current_tool_function:
                 self.current_tool_function(item, **op_params)
@@ -254,7 +254,7 @@ class Painting(ttk.Frame):
             item = self.canvas.find_closest(event.x, event.y)
             op_params = {x:self.master.toolbar.options[x].get() for x in self.master.toolbar.options}
             op_params["colour1"] = self.master.toolbar.colour1
-            if item[0] != self.background:
+            if item[0] != self.background or self.master.toolbar.selected_tool=="dropper":
                 self.current_tool_function(item, **op_params)
             elif item[0] == self.background:
                 self.nanolist[item] = self.master.toolbar.colour1
@@ -277,12 +277,13 @@ class Painting(ttk.Frame):
         pass
 
     def dropper(self, item: int, **kwargs) -> None:
-        pass
+        self.master.toolbar.colour1 = self.nanolist[item]
+        self.master.toolbar.colour1_button.config(bg=self.nanolist[item])
 
     def marker(self, item: int, **kwargs) -> None:
         """
         TODO**
-        Eraser tool functionality: Reset the color of the triangle
+        Eraser tool functionality: Reset the colour of the triangle
         """
         radius = kwargs["radius"]
         strength = kwargs["strength"]
@@ -291,7 +292,7 @@ class Painting(ttk.Frame):
 
     def pencil(self, item: int, **kwargs) -> None:
         """
-        Pencil tool functionality: Change the color of the triangle to the selected color
+        Pencil tool functionality: Change the colour of the triangle to the selected colour
         """
         radius = kwargs["radius"]
         self.nanolist[item] = self.master.toolbar.colour1

@@ -11,8 +11,8 @@ class NanoList:
         """
         self.canvas = canvas
         self.shape: List[int] = shape
-        self.data = [["#000"] * i for i in self.shape]
-        self.data[0][0] = "#555"
+        self.data = [["#000000"] * i for i in self.shape]
+        self.data[0][0] = "#555555"
         self.history = [] # Previous edits, Last entry is most recent
         self.future = [] # Previous undos, Last entry is most recent
         self.forward = True 
@@ -22,6 +22,7 @@ class NanoList:
         Get entry based on either index or [row][col]
             Although each row is staggered, each row starts at 0 index
         """
+        if isinstance(index, tuple) and len(index)==1: index = index[0]
         if isinstance(index, tuple):
             outer_index, inner_index = index
             try:
@@ -29,6 +30,7 @@ class NanoList:
             except IndexError:
                 raise IndexError(f"Index {inner_index} out of range for sublist {outer_index}")
         else:
+            index -=1
             if index < 0:
                 raise IndexError("Negative indexing is not supported")
             current_index = index
@@ -217,4 +219,16 @@ class NanoList:
                 self.history.append(self.future.pop())
             except IndexError:
                 print("Nothing to redo")
+
+    def colour_mixer(self, c1, c2, s2=0.5):
+        """
+        c1 is the colour already on the screen
+        c2 is the colour that will be applied
+        s2 is the strength of the applied colour (0-1)
+        """
+        if not (0<=s2<=1):
+            raise ValueError("s2 must be between 0 and 1")
+        s1=1-s2
+
+        
 
