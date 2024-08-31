@@ -31,13 +31,14 @@ class ToolSideBar(ttk.Frame):
         super().__init__(parent, width=150)
 
         # Initlize variables
+        # Tools
         self.icons = {}
         self.buttons = {}
-        self.colour1 = "hot pink"
         self.selected_tool = None
-        self.radius = tk.IntVar()
-        self.tolerance = tk.DoubleVar()
-        self.strength = tk.DoubleVar()
+
+        # Options
+        self.options = {}
+        self.colour1 = "hot pink"
 
         # Create tools and color buttons
         self.create_tool_options()
@@ -77,15 +78,16 @@ class ToolSideBar(ttk.Frame):
         self.color1_button.pack()
 
         # Radius, tolerance, strnegth
-        options = {"radius":[5, self.radius], "tolerance":[1, self.tolerance], "strength":[100, self.strength]}
-        for i, option in enumerate(options):
+        # {tool: [max val, resolution], ...}
+        op_param = {"radius":[5, 1], "tolerance":[100, 5], "strength":[1, 0.01]}
+        for i, option in enumerate(op_param):
             frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
             frame.grid(row=5+i, column=0, columnspan=2, pady=5)
-            slider = tk.Scale(frame, from_=0, to=options[option][0], orient=tk.HORIZONTAL, variable=options[option][1], label=option)
+            slider = tk.Scale(frame, from_=0, to=op_param[option][0], orient=tk.HORIZONTAL, label=option, resolution=op_param[option][1])
             slider.pack()
+            self.options[option] = slider
 
     def select_tool(self, tool: str) -> None:
-        # Set the selected tool
         self.selected_tool = tool
 
         for t, button in self.buttons.items():
@@ -215,12 +217,15 @@ class Painting(ttk.Frame):
         Handles canvas click event
         """
         item = self.canvas.find_closest(event.x, event.y)
-        colour1 = self.master.toolbar.colour1
-        radius = self.master.toolbar.radius
+        
+        # op_params of the form {"radius":2, ...}
+        op_params = {x:self.master.toolbar.options[x].get() for x in self.master.toolbar.options}
+        op_params["colour1"] = self.master.toolbar.colour1
+
         if item[0] != self.background:
             self.current_tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
             if self.current_tool_function:
-                self.current_tool_function(item, colour1=colour1, radius=radius)
+                self.current_tool_function(item, **op_params)
             else:
                 print(f"No function defined for tool {self.master.toolbar.selected_tool}")
         elif item[0] == self.background:
@@ -233,10 +238,10 @@ class Painting(ttk.Frame):
         """
         if self.current_tool_function:
             item = self.canvas.find_closest(event.x, event.y)
-            colour1 = self.master.toolbar.colour1
-            radius = self.master.toolbar.radius
+            op_params = {x:self.master.toolbar.options[x].get() for x in self.master.toolbar.options}
+            op_params["colour1"] = self.master.toolbar.colour1
             if item[0] != self.background:
-                self.current_tool_function(item, colour1=colour1, radius=radius)
+                self.current_tool_function(item, **op_params)
             elif item[0] == self.background:
                 self.nanolist[item] = self.master.toolbar.colour1
                 self.nanolist.update()
