@@ -3,7 +3,6 @@ from tkinter import ttk, colorchooser
 from PIL import Image, ImageTk
 from nanolist import NanoList
 from random import random
-from math import sin
 
 class App(tk.Tk):
     """
@@ -37,10 +36,10 @@ class ToolSideBar(ttk.Frame):
         self.icons = {}
         self.buttons = {}
         self.selected_tool = None
-
         # Options
         self.options = {}
         self.colour1 = "hot pink"
+        self.colour_hist = {}
 
         # Create tools and colour buttons
         self.create_tool_options()
@@ -68,16 +67,36 @@ class ToolSideBar(ttk.Frame):
         """
 
         def choose_colour1() -> None:
-            colour = colorchooser.askcolor(title="Choose Colour 1")[1]
-            if colour:
-                self.colour1 = colour
+            newcolour = colorchooser.askcolor(title="Choose Colour 1")[1]
+            if newcolour:
+                self.colour1 = newcolour
                 self.colour1_button.config(bg=self.colour1)
 
+            dict_copy = self.colour_hist.copy()
+            for x in range(len(self.colour_hist)-1, 0, -1):
+                self.colour_hist[x][1] = dict_copy[x-1][1] 
+
+            self.colour_hist[0][1] = newcolour
+            self.update_colours()
+
+
+        def make_col_hist_butts() -> None:
+            colour_hist = ["deep sky blue", "gold", "lawn green", "deep pink", "blue2", "cyan2"]
+            col_hist_frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
+            col_hist_frame.grid(row=1, column=0, pady=5, padx=3, columnspan=2)
+            for i, colour in enumerate(colour_hist):
+                button = tk.Button(col_hist_frame, bg=colour_hist[i], width=2, height=1,command=lambda index=i: self.choose_colour(index), relief="flat" )
+                button.grid(row=0, column=i)
+                self.colour_hist[i] = [button, colour]
+
         # Colour picker
-        self.colour1_frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
-        self.colour1_frame.grid(row=0, column=0, pady=5, columnspan=2)
-        self.colour1_button = tk.Button(self.colour1_frame, bg=self.colour1, width=15, height=2, command=choose_colour1, borderwidth=5, border=5, relief="flat")
+        col_frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
+        col_frame.grid(row=0, column=0, pady=5, columnspan=2)
+        self.colour1_button = tk.Button(col_frame, bg=self.colour1, width=15, height=2, command=choose_colour1, borderwidth=5, border=5, relief="flat")
         self.colour1_button.pack()
+
+        # Historic colour buttons
+        make_col_hist_butts()
 
         # Radius, tolerance, strnegth
         # {tool: [max val, resolution], ...}
@@ -112,6 +131,19 @@ class ToolSideBar(ttk.Frame):
                 button.config(bg="green")
             else:
                 button.config(bg="SystemButtonFace")
+    
+    def choose_colour(self, index: int):
+        """
+        change active colour from one in history
+        """
+        colour = self.colour_hist[index][1]
+        self.colour1_button.config(bg=colour)
+        self.colour1=colour
+    
+    def update_colours(self):
+        for x in self.colour_hist:
+            self.colour_hist[x][0].config(bg=self.colour_hist[x][1])
+
 
 
 class Painting(ttk.Frame):
