@@ -304,12 +304,10 @@ class Painting(ttk.Frame):
         """
         radius = kwargs["radius"]
         strength = kwargs["strength"]
-        k = NanoList()
-        pts = k.kn
-        (item, radius)
+        pts = self.nanolist.knn(item, radius=radius)
         for x in pts:
             self.nanolist[x] = self.master.toolbar.colour1
-            self.canvas.itemconfig(x, fill="#00FFFFF")
+            self.nanolist.update()
 
 
 def main() -> None:

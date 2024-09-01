@@ -69,7 +69,7 @@ class NanoList:
         """
         if index < 0:
             raise IndexError("Negative indexing is not supported")
-        current_index = index
+        current_index = index-1
         for outer_index, sublist in enumerate(self.data):
             if current_index < len(sublist):
                 return (outer_index, current_index)
@@ -91,84 +91,99 @@ class NanoList:
         radius = 1: [0,0, ]
         """
         index = index[0]
-        relative_points = self._generate_points(radius, flip=self._is_rightsideup(index))
+        relative_points = self._generate_points(radius, apply_flip=self._is_rightsideup(index))
         center_pos = self._get_rowcol(index)
-        print("relative_points")
-        print(relative_points)
-        relative_points = [()]
+
         abs_pos = self._get_abs_pts(center_pos, relative_points)
         return abs_pos
 
-    def _get_abs_pts(self, center, rel_pts):
+    def _get_abs_pts(self, center: Tuple[int, int], rel_pts: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """
-        Calculates the absolute coordinate of a list of points.
-        Given center, and list of the coordinates relative to center
+        Calculates the absolute coordinates of a list of points.
+        Given center, and list of the coordinates relative to the center.
         """
         abs_pts = []
-        (row_center, col_center) = center
-        num_cols_in_center = self.shape[row_center]
-        for pt in rel_pts:
-            (row_rel, col_rel) = pt
-            num_cols_in_rel = self.shape[row_center+row_rel]
-            col_diff = num_cols_in_rel - num_cols_in_center
-            row = row_center + row_rel
-            col = col_center + col_diff + col_rel
-            abs_pts.append((row+col))
+        row_cent, col_cent = center
+
+        for rel_pt in rel_pts:
+            try:
+                (row_rel, col_rel) = rel_pt
+
+                row = row_cent + row_rel
+
+                shift = (self.shape[row_cent + row_rel] - self.shape[row_cent]) // -2
+                col = col_cent + col_rel - shift
+                if self._is_exist((row, col)):
+                    abs_pts.append((row, col))
+            except IndexError:
+                pass
+
 
         return abs_pts
 
 
-    def _generate_points(self, r, flip=False):
+
+
+
+    def _generate_points(self, r, apply_flip=False):
         """
         generate the relative coordinates. 
+        num_per_row starts top to bottom
         returns a list of the form [(0,0), (1,0), (1,1), (-1,-1)]
         """
-        if r == 0:
-            return[0]
-        if r == 1:
-            pattern = [1, 3]
-
-        pattern = [2*r+1]*(2*r-1)
-
-        for i, _ in enumerate(pattern):
-            if i < (r-1): 
-                pattern[i] += 2*i
-            if i == (r-1):
-                pattern[i] = pattern[i-1]
-            elif i > (r-1):
-                pattern[i] = pattern[i-1] - 2
         
-        if flip:
-            pattern.reverse()
+        patterns = {
+            0: [1],
+            1: [1, 3],
+            2: [5, 5, 3],
+            3: [7, 9, 9, 7, 5],
+            4: [9, 11, 13, 13, 11, 9, 7],
+            5: [11, 13, 15, 17, 17, 15, 13, 11, 9]
+        }
 
-        return pattern
+        num_per_row = patterns.get(r)
+        offset = r if r<2 else r-1 #gives 0, 1, 1, 2, 3, 4
+
+        pts = []
+        flip = -1 if apply_flip else 1
+        for i in num_per_row:
+            x0 = int((i-1)/(-2))
+            for j in range(i):
+                pts.append((offset*flip, x0+j)) 
+            offset -= 1
+        return pts
 
 
-    def _is_rightsideup(self, index: Union[int, Tuple[int, int]]) -> bool:
+    def _is_rightsideup(self, pos: Union[int, Tuple[int, int]]) -> bool:
         """
         Checks if a triangle is rightside up
         """
-        # Its only being called once, should I keep check for (row, col)?
-        if isinstance(index, int):
-            row, col = self._get_rowcol(index)
-        else: (row, col) = index # <- should never be used
+        if isinstance(pos, int):
+            row, col = self._get_rowcol(pos)
+        else: (row, col) = pos
 
-        if row < 6: growing = True
+        if row < 7: growing = True
         else: growing = False
 
-        if (col + growing) % 2: return True
-        else: return False
+        if (col + growing) % 2: 
+            return False
+        else: 
+            return True
 
-    def _is_exist(self, pos: Tuple[int, int]) -> bool:
+    def _is_exist(self, pos: Union[int, Tuple[int, int], Tuple]) -> bool:
         """
         Checks if triangle exists from a given (row, col) coordinate
         """
-        (row, col) = pos
-
-        if row < 0 or col < 0:
+        if isinstance(pos, tuple) and len(pos)==1:
+            index = pos[0]
+        if isinstance(pos, int):
+            index = pos
+        try: (row, col) = self._get_rowcol(index)
+        except: (row, col) = pos
+        if row < 1 or col < 0:
             return False
 
-        if row > len(self.shape)():
+        if row > len(self.shape):
             return False
 
         if col >= self.shape[row]:
