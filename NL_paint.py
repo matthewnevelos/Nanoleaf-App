@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk, colorchooser
 from PIL import Image, ImageTk
 from nanolist import NanoList
+from random import random
+from math import sin
 
 class App(tk.Tk):
     """
@@ -79,7 +81,7 @@ class ToolSideBar(ttk.Frame):
 
         # Radius, tolerance, strnegth
         # {tool: [max val, resolution], ...}
-        op_param = {"radius":[5, 1], "tolerance":[100, 5], "strength":[1, 0.01]}
+        op_param = {"radius":[4, 1], "tolerance":[100, 5], "strength":[1, 0.01]}
         for i, option in enumerate(op_param):
             frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
             frame.grid(row=5+i, column=0, columnspan=2, pady=5)
@@ -250,6 +252,7 @@ class Painting(ttk.Frame):
         """
         Handles dragging motion over the canvas
         """
+        self.after(20) # still 50fps
         if self.current_tool_function:
             item = self.canvas.find_closest(event.x, event.y)
             op_params = {x:self.master.toolbar.options[x].get() for x in self.master.toolbar.options}
@@ -306,8 +309,9 @@ class Painting(ttk.Frame):
         strength = kwargs["strength"]
         pts = self.nanolist.knn(item, radius=radius)
         for x in pts:
-            self.nanolist[x] = self.master.toolbar.colour1
-            self.nanolist.update()
+            if 3*random() < ((strength+0.001)**((strength+1))):
+                self.nanolist[x] = self.master.toolbar.colour1
+                self.nanolist.update()
 
 
 def main() -> None:
