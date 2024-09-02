@@ -118,7 +118,6 @@ class ToolSideBar(ttk.Frame):
                            "spray":["radius", "strength"]}
         
         for option in self.options:
-            self.options[option].set(0)
             if option in enabled_options[tool]:
                 self.options[option].config(state=tk.NORMAL, bg="SystemButtonFace")
             else:
@@ -162,9 +161,10 @@ class Painting(ttk.Frame):
         self.after(0, self.nanolist.update)
         
         self.bind("<Configure>", self.on_resize)
-        self.canvas.bind("<Button-1>", self.on_canvas_click)  # Bind left-click event
-        self.canvas.bind("<B1-Motion>", self.on_canvas_drag)  # Bind dragging event
-        self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)  # Bind release event
+        self.canvas.bind("<Button-1>", self.on_canvas_click) 
+        self.canvas.bind("<B1-Motion>", self.on_canvas_drag) 
+        self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release) 
+        self.canvas.bind("<MouseWheel>", self.scroll_radius)
 
         self.triangles = []  # Store references to the triangle items
         
@@ -276,8 +276,9 @@ class Painting(ttk.Frame):
             else:
                 print(f"No function defined for tool {self.master.toolbar.selected_tool}")
         elif item[0] == self.background:
-            self.nanolist[item] = self.master.toolbar.colour1
-            self.nanolist.update()
+            if self.master.toolbar.selected_tool != "blend":
+                self.nanolist[item] = self.master.toolbar.colour1
+                self.nanolist.update()
 
     def on_canvas_drag(self, event: tk.Event) -> None:
         """
@@ -296,6 +297,12 @@ class Painting(ttk.Frame):
         Handles mouse button release after dragging
         """
         self.current_tool_function = None
+
+    def scroll_radius(self, event):
+        current_r = self.master.toolbar.options['radius'].get()
+        delta_r = int(1*(event.delta/120))
+        new_r = current_r + delta_r
+        self.master.toolbar.options['radius'].set(new_r)
 
 
     def blend(self, item: int, **kwargs) -> None:
