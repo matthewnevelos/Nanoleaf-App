@@ -46,7 +46,7 @@ class ToolSideBar(ttk.Frame):
         self.create_tools()
 
         # Initially select pen
-        self.select_tool("pencil")
+        self.select_tool(None)
 
     def create_tools(self) -> None:
         icons = ["blend", "bucket", "dropper", "marker", "pencil", "spray"]
@@ -110,12 +110,13 @@ class ToolSideBar(ttk.Frame):
     def select_tool(self, tool: str) -> None:
         self.selected_tool = tool
 
-        enabled_options = {"blend":["radius", "strength"],
-                           "bucket":["tolerance"],
-                           "dropper":[],
-                           "marker":["radius", "strength"],
-                           "pencil":["radius"],
-                           "spray":["radius", "strength"]}
+        enabled_options = {"blend": ["radius", "strength"],
+                           "bucket": ["tolerance"],
+                           "dropper": [],
+                           "marker": ["radius", "strength"],
+                           "pencil": ["radius"],
+                           "spray": ["radius", "strength"],
+                           None: []}
         
         for option in self.options:
             if option in enabled_options[tool]:
@@ -123,6 +124,9 @@ class ToolSideBar(ttk.Frame):
             else:
                 self.options[option].config(state=tk.DISABLED, bg="gray50")
 
+        # Correct access to canvas_frame
+        if hasattr(self.master, 'canvas_frame'):
+            self.master.canvas_frame.set_cursor(tool)
 
         for t, button in self.buttons.items():
             if t == tool:
@@ -165,6 +169,7 @@ class Painting(ttk.Frame):
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag) 
         self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release) 
         self.canvas.bind("<MouseWheel>", self.scroll_radius)
+        # self.canvas.bind('<Motion>', self.on_mouse_move)
 
         self.triangles = []  # Store references to the triangle items
         
@@ -274,7 +279,7 @@ class Painting(ttk.Frame):
             if self.current_tool_function:
                 self.current_tool_function(item, **op_params)
             else:
-                print(f"No function defined for tool {self.master.toolbar.selected_tool}")
+                print(f"No function defined for tool: {self.master.toolbar.selected_tool}")
         elif item[0] == self.background:
             if self.master.toolbar.selected_tool != "blend":
                 self.nanolist[item] = self.master.toolbar.colour1
@@ -298,12 +303,16 @@ class Painting(ttk.Frame):
         """
         self.current_tool_function = None
 
-    def scroll_radius(self, event):
+    def scroll_radius(self, event: tk.Event):
         current_r = self.master.toolbar.options['radius'].get()
         delta_r = int(1*(event.delta/120))
         new_r = current_r + delta_r
         self.master.toolbar.options['radius'].set(new_r)
 
+    def set_cursor(self, tool):
+        # https://stackoverflow.com/a/66205274
+        path = f"@cursors/{tool}.cur"
+        self['cursor'] = path
 
     def blend(self, item: int, **kwargs) -> None:
         radius = kwargs["radius"]
@@ -316,8 +325,6 @@ class Painting(ttk.Frame):
             adj_pts = [pt for pt in adj_pts if pt != x]
             for y in adj_pts:
                 adj_col.append(self.nanolist[y])
-            print(x)
-            print(adj_pts)
             new_col = self.nanolist.colour_mixer(self.nanolist[x], strength, adj_col)
             self.nanolist[x] = new_col
             self.nanolist.update()
