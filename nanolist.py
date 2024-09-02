@@ -235,17 +235,30 @@ class NanoList:
             except IndexError:
                 print("Nothing to redo")
 
+    def colour_parse(self, c: str) -> Tuple[int, int, int]:
+        """
+        c = colour in form "#123456" (3 2 byte base 16 numbers)
+        returns (12, 23, 45) (3 numbers from 0-255)
+        """
+        c = c.lstrip("#")
+        r = int(c[0:2], 16)
+        g = int(c[2:4], 16)
+        b = int(c[4:6], 16)
+        return (r, g, b)
+
+
     def colour_mixer(self, c1, c2, s2=0.5):
         """
         c1 is the colour already on the screen
         c2 is the colour that will be applied
         s2 is the strength of the applied colour (0-1)
         """
-        if not (0<=s2<=1):
-            raise ValueError("s2 must be between 0 and 1")
+        r1, b1, g1 = self.colour_parse(c1)
+        r2, b2, g2 = self.colour_parse(c1)
+
         s1=1-s2
 
-    def similar_neighbour(self, init_coord: Tuple[int, int], tol: float, c1: str, val_pts: List[Tuple[int, int]]):
+    def similar_neighbour(self, init_coord: Tuple[int, int], tol: float, c1: str, val_pts: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """
         index is index we want to find the numbers of
         tol is the tolerance of similarity (0-100)
@@ -270,15 +283,8 @@ class NanoList:
         tol is the tolerance of similarity (0-100)
         returns true if valid
         """
-        c1 = c1.lstrip("#")
-        r1 = int(c1[0:2], 16)
-        g1 = int(c1[2:4], 16)
-        b1 = int(c1[4:6], 16)
-
-        c2 = c2.lstrip("#")
-        r2 = int(c2[0:2], 16)
-        g2 = int(c2[2:4], 16)
-        b2 = int(c2[4:6], 16)
+        r1, b1, g1 = self.colour_parse(c1)
+        r2, b2, g2 = self.colour_parse(c1)
 
         d1, d2, d3 = abs(r1 - r2), abs(g1 - g2), abs(b1 - b2)
 

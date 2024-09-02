@@ -38,7 +38,7 @@ class ToolSideBar(ttk.Frame):
         self.selected_tool = None
         # Options
         self.options = {}
-        self.colour1 = "hot pink"
+        self.colour1 = "#FF69B4"
         self.colour_hist = {}
 
         # Create tools and colour buttons
