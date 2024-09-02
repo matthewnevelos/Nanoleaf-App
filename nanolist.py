@@ -240,6 +240,7 @@ class NanoList:
         c = colour in form "#123456" (3 2 byte base 16 numbers)
         returns (12, 23, 45) (3 numbers from 0-255)
         """
+        print(c)
         c = c.lstrip("#")
         r = int(c[0:2], 16)
         g = int(c[2:4], 16)
@@ -247,16 +248,20 @@ class NanoList:
         return (r, g, b)
 
 
-    def colour_mixer(self, c1, c2, s2=0.5):
+    def colour_mixer(self, c1, c2, s2):
         """
         c1 is the colour already on the screen
         c2 is the colour that will be applied
         s2 is the strength of the applied colour (0-1)
         """
-        r1, b1, g1 = self.colour_parse(c1)
-        r2, b2, g2 = self.colour_parse(c1)
+        s1 = 1-s2
+        r1, g1, b1 = self.colour_parse(c1)
+        r2, g2, b2 = self.colour_parse(c2)
 
-        s1=1-s2
+        r = (r1*s1 + r2*s2)
+        g = (g1*s1 + g2*s2)
+        b = (b1*s1 + b2*s2)
+        return f"#{int(r):02X}{int(g):02X}{int(b):02X}"
 
     def similar_neighbour(self, init_coord: Tuple[int, int], tol: float, c1: str, val_pts: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """
@@ -284,7 +289,7 @@ class NanoList:
         returns true if valid
         """
         r1, b1, g1 = self.colour_parse(c1)
-        r2, b2, g2 = self.colour_parse(c1)
+        r2, b2, g2 = self.colour_parse(c2)
 
         d1, d2, d3 = abs(r1 - r2), abs(g1 - g2), abs(b1 - b2)
 

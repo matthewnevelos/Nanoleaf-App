@@ -290,9 +290,6 @@ class Painting(ttk.Frame):
             op_params["colour1"] = self.master.toolbar.colour1
             if item[0] != self.background or self.master.toolbar.selected_tool=="dropper":
                 self.current_tool_function(item, **op_params)
-            elif item[0] == self.background:
-                self.nanolist[item] = self.master.toolbar.colour1
-                self.nanolist.update()
 
     def on_canvas_release(self, event: tk.Event) -> None:
         """
@@ -317,30 +314,37 @@ class Painting(ttk.Frame):
 
 
     def dropper(self, item: int, **kwargs) -> None:
+        """
+        changes colour to the colour of the one clicked
+        """
         self.master.toolbar.colour1 = self.nanolist[item]
         self.master.toolbar.colour1_button.config(bg=self.nanolist[item])
 
     def marker(self, item: int, **kwargs) -> None:
         """
-        TODO**
-        Eraser tool functionality: Reset the colour of the triangle
+        Marker adds colour mixing with what is already on the canvas
         """
         radius = kwargs["radius"]
         strength = kwargs["strength"]
-        self.nanolist[item] = "#ffffff"
-        self.nanolist.update()
+        pts = self.nanolist.knn(item, radius=radius)
+        for x in pts:
+            new_colour = self.nanolist.colour_mixer(self.nanolist[x], self.master.toolbar.colour1, strength)
+            self.nanolist[x] = new_colour
+            self.nanolist.update()
 
     def pencil(self, item: int, **kwargs) -> None:
         """
-        Pencil tool functionality: Change the colour of the triangle to the selected colour
+        Pencil directly changes colour
         """
         radius = kwargs["radius"]
-        self.nanolist[item] = self.master.toolbar.colour1
-        self.nanolist.update()
+        pts = self.nanolist.knn(item, radius=radius)
+        for x in pts:
+            self.nanolist[x] = self.master.toolbar.colour1
+            self.nanolist.update()
 
     def spray(self, item: int, **kwargs) -> None:
         """
-        Spraypaint tool functionality
+        Adds colour with randomness
         """
         radius = kwargs["radius"]
         strength = kwargs["strength"]
