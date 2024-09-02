@@ -301,7 +301,20 @@ class Painting(ttk.Frame):
     def blend(self, item: int, **kwargs) -> None:
         radius = kwargs["radius"]
         strength = kwargs["strength"]
-        pass
+        pts = self.nanolist.knn(item, radius=radius)
+        for x in pts:
+            i = self.nanolist._get_index(x)
+            adj_col = []
+            adj_pts = self.nanolist.knn(i, radius=1)
+            adj_pts = [pt for pt in adj_pts if pt != x]
+            for y in adj_pts:
+                adj_col.append(self.nanolist[y])
+            print(x)
+            print(adj_pts)
+            new_col = self.nanolist.colour_mixer(self.nanolist[x], strength, adj_col)
+            self.nanolist[x] = new_col
+            self.nanolist.update()
+            
 
     def bucket(self, item: int, **kwargs) -> None:
         tolerance = kwargs["tolerance"]
@@ -328,7 +341,7 @@ class Painting(ttk.Frame):
         strength = kwargs["strength"]
         pts = self.nanolist.knn(item, radius=radius)
         for x in pts:
-            new_colour = self.nanolist.colour_mixer(self.nanolist[x], self.master.toolbar.colour1, strength)
+            new_colour = self.nanolist.colour_mixer(self.nanolist[x], strength, [self.master.toolbar.colour1])
             self.nanolist[x] = new_colour
             self.nanolist.update()
 
