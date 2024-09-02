@@ -14,4 +14,4 @@ To be used for the University of Calgary's Nanoleaf setup.
 - Run `NL_paint.py`
 
 ### App Showcase:
-![App showcase](other/app_showcase.mp4)
+![App showcase](other/app_showcase.gif)
