@@ -79,9 +79,8 @@ class ToolSideBar(ttk.Frame):
             self.colour_hist[0][1] = newcolour
             self.update_colours()
 
-
         def make_col_hist_butts() -> None:
-            colour_hist = ["deep sky blue", "gold", "lawn green", "deep pink", "blue2", "cyan2"]
+            colour_hist = ["#FF1493", "#FFD700", "#7CFC00", "#00BFFF", "#0000EE", "#A020F0"]
             col_hist_frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
             col_hist_frame.grid(row=1, column=0, pady=5, padx=3, columnspan=2)
             for i, colour in enumerate(colour_hist):
@@ -103,7 +102,7 @@ class ToolSideBar(ttk.Frame):
         op_param = {"radius":[4, 1], "tolerance":[100, 5], "strength":[1, 0.01]}
         for i, option in enumerate(op_param):
             frame = tk.Frame(self, bg="black", borderwidth=1, relief="flat")
-            frame.grid(row=5+i, column=0, columnspan=2, pady=5)
+            frame.grid(row=5+i, column=0, columnspan=2, pady=(19, 0))
             slider = tk.Scale(frame, from_=0, to=op_param[option][0], orient=tk.HORIZONTAL, label=option, resolution=op_param[option][1])
             slider.pack()
             self.options[option] = slider
@@ -309,7 +308,13 @@ class Painting(ttk.Frame):
 
     def bucket(self, item: int, **kwargs) -> None:
         tolerance = kwargs["tolerance"]
-        pass
+        pts_abs = [self.nanolist._get_rowcol(item[0])]
+        c1 = self.nanolist[pts_abs[0]]
+        pts_abs = self.nanolist.similar_neighbour(pts_abs[0], tolerance, c1, pts_abs)
+        for x in pts_abs:
+            self.nanolist[x] = self.master.toolbar.colour1
+            self.nanolist.update()
+
 
     def dropper(self, item: int, **kwargs) -> None:
         self.master.toolbar.colour1 = self.nanolist[item]

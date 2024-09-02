@@ -1,6 +1,7 @@
 from typing import Tuple, Union, List
 
 # TODO Add colours to __str__
+import tkinter as tk
 
 class NanoList:
     def __init__(self, canvas, shape=[1, 13, 15, 17, 19, 21, 23, 23, 21, 19, 17]):
@@ -86,11 +87,10 @@ class NanoList:
     
     def knn(self, index, radius) -> Tuple[int]:
         """
-        Return nearest neighbours of a point based on set radius
-        radius = 0: [0,0]
-        radius = 1: [0,0, ]
+        Return nearest neighbours of a point based on set radius. returns absolute (row, col)
         """
-        index = index[0]
+        if isinstance(index, tuple):
+            index = index[0]
         relative_points = self._generate_points(radius, apply_flip=self._is_rightsideup(index))
         center_pos = self._get_rowcol(index)
 
@@ -245,5 +245,44 @@ class NanoList:
             raise ValueError("s2 must be between 0 and 1")
         s1=1-s2
 
-        
+    def similar_neighbour(self, init_coord: Tuple[int, int], tol: float, c1: str, val_pts: List[Tuple[int, int]]):
+        """
+        index is index we want to find the numbers of
+        tol is the tolerance of similarity (0-100)
+        c1 is the colour already on the screen
+        val_pts is the valid coords
+        returns number of valid neighbours, abs coords of them
+        """
+        index = self._get_index(init_coord)
+        for neigh_row, neigh_col in self.knn(index=index, radius=1):
+            if self.colour_similar(c1, self.data[neigh_row][neigh_col], tol):
+                neigh_coord = tuple((neigh_row, neigh_col))
+                if neigh_coord not in val_pts:
+                    val_pts.append(neigh_coord)
+                    self.similar_neighbour(neigh_coord, tol, c1, val_pts)
+        return val_pts
 
+
+    def colour_similar(self, c1: str, c2: str, tol: float) -> bool:
+        """
+        c1 is the colour already on the screen
+        c2 is the colour that will be applied
+        tol is the tolerance of similarity (0-100)
+        returns true if valid
+        """
+        c1 = c1.lstrip("#")
+        r1 = int(c1[0:2], 16)
+        g1 = int(c1[2:4], 16)
+        b1 = int(c1[4:6], 16)
+
+        c2 = c2.lstrip("#")
+        r2 = int(c2[0:2], 16)
+        g2 = int(c2[2:4], 16)
+        b2 = int(c2[4:6], 16)
+
+        d1, d2, d3 = abs(r1 - r2), abs(g1 - g2), abs(b1 - b2)
+
+        if d1 <= tol and d2 <= tol and d3 <= tol:
+            return True
+        else:
+            return False
