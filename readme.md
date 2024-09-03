@@ -11,7 +11,7 @@ To be used for the University of Calgary's Nanoleaf setup.
     - `git clone https://github.com/matthewnevelos/Nanoleaf-App.git`
 - Download all required libraries
     - `pip install -r other/requirements.txt`
-- Run `NL_paint.py`
+- Run `app.py`
 
 ### App Showcase:
 ![App showcase](other/app_showcase.gif)

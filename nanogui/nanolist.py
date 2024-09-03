@@ -1,7 +1,6 @@
 from typing import Tuple, Union, List
 
 # TODO Add colours to __str__
-import tkinter as tk
 
 class NanoList:
     def __init__(self, canvas, shape=[1, 13, 15, 17, 19, 21, 23, 23, 21, 19, 17]):
