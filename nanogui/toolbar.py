@@ -28,14 +28,14 @@ class ToolSideBar(ttk.Frame):
         icons = ["blend", "bucket", "dropper", "marker", "pencil", "spray"]
         for i, icon in enumerate(icons):
             try:
-                image = Image.open(f"icons/{icon}.png").resize((50, 50))
+                image = Image.open(f"img/icons/{icon}.png").resize((50, 50))
                 photo = ImageTk.PhotoImage(image)
                 button = tk.Button(self, image=photo, command=lambda icon=icon: self.select_tool(icon), relief="groove", borderwidth=2)
                 button.grid(row=i // 2 + 2, column=i % 2, padx=5, pady=5)  # Adjust row to start below colour buttons
                 self.icons[icon] = photo  # Store reference
                 self.buttons[icon] = button
             except FileNotFoundError:
-                print(f"Icon {icon}.png not found in the 'icons/' directory.")
+                print(f"Icon {icon}.png not found in the 'img/icons/' directory.")
 
     def create_tool_options(self) -> None:
         """
@@ -74,7 +74,7 @@ class ToolSideBar(ttk.Frame):
         make_col_hist_butts()
 
         # Undo/redo buttons
-        image = Image.open("icons/undo.png").resize((40, 40))
+        image = Image.open("img/icons/undo.png").resize((40, 40))
         self.undo_img = ImageTk.PhotoImage(image)
         self.redo_img = ImageTk.PhotoImage(image.transpose(Image.FLIP_LEFT_RIGHT))
         self.undo_butt = tk.Button(self, image=self.undo_img, command=self.undo, relief="groove", borderwidth=2)

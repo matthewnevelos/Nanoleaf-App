@@ -169,7 +169,7 @@ class Painting(ttk.Frame):
 
     def set_cursor(self, tool):
         # https://stackoverflow.com/a/66205274
-        path = f"@cursors/{tool}.cur"
+        path = f"@img/cursors/{tool}.cur"
         self['cursor'] = path
 
     def blend(self, item: int, **kwargs) -> None:
