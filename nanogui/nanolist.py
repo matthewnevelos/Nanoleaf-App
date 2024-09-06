@@ -1,4 +1,5 @@
 from typing import Tuple, Union, List
+import copy
 
 # TODO Add colours to __str__
 
@@ -13,9 +14,9 @@ class NanoList:
         self.shape: List[int] = shape
         self.data = [["#000000"] * i for i in self.shape]
         self.data[0][0] = "#555555"
-        self.history = [] # Previous edits, Last entry is most recent
-        self.future = [] # Previous undos, Last entry is most recent
-        self.forward = True 
+        self.undo_list = [copy.deepcopy(self.data)] # Most recent changes. Last entry is most recent
+        self.redo_list = [] # Previous undos. Last entry is most recent
+        self.forward = True # False if most recent change was an undo command
 
     def __getitem__(self, index):
         """
@@ -206,33 +207,45 @@ class NanoList:
 
         return middle
     
-    def update(self, forward=True):
-        if not self.forward and forward: # If previous update was undo/redo and current is novel update, clear self.future
-            self.future.clear()
-
-        self.forward = forward
-        if forward:
-            self.history.append(self.data)
-            self.history = self.history[-10:] # Only keep 10 most recent
-
+    def update(self):
         for row_i, row in enumerate(self.data):
             for col_i, colour in enumerate(row):
                 index = self._get_index((row_i, col_i))
                 self.canvas.itemconfig(index, fill=colour)
 
+    def update_undo(self) -> None:
+        """
+        UNDOS:
+        undo_list = previous 10 things which it can undo
+        first in last out.
+        """
+        if not self.forward: # Means second last update was the undo button. Last update was an edit(click or drag)
+            self.redo_list = []
+        self.forward=True
+        self.undo_list.append(copy.deepcopy(self.data))
+        self.undo_list = self.undo_list[-10:] # Only keep 10 most recent
+
     def undo(self):
+        if self.forward:
+            self.undo_list.pop()
+        self.forward=False
         try:
-            self.future.append(self.history.pop())
-            self.update(forward=False)
+            self.redo_list.append(self.data)
+            self.data = self.undo_list.pop()
+            self.update()
         except IndexError:
             print("Nothing to undo")
 
     def redo(self):
-        if not self.forward: # executes only if last update was an undo
-            try:
-                self.history.append(self.future.pop())
-            except IndexError:
+            if self.redo_list == []:
                 print("Nothing to redo")
+                return
+            try:
+                self.undo_list.append(self.data)
+                self.data = self.redo_list.pop()
+                self.update()
+            except IndexError:
+                print("How did this happen?")
 
     def colour_parse(self, c: str) -> Tuple[int, int, int]:
         """

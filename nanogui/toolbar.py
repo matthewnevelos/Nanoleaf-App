@@ -73,6 +73,15 @@ class ToolSideBar(ttk.Frame):
         # Historic colour buttons
         make_col_hist_butts()
 
+        # Undo/redo buttons
+        image = Image.open("icons/undo.png").resize((40, 40))
+        self.undo_img = ImageTk.PhotoImage(image)
+        self.redo_img = ImageTk.PhotoImage(image.transpose(Image.FLIP_LEFT_RIGHT))
+        self.undo_butt = tk.Button(self, image=self.undo_img, command=self.undo, relief="groove", borderwidth=2)
+        self.redo_butt = tk.Button(self, image=self.redo_img, command=self.redo, relief="groove", borderwidth=2)
+        self.undo_butt.grid(row=9, column=0, padx=5, pady=5)
+        self.redo_butt.grid(row=9, column=1, padx=5, pady=5)
+
         # Radius, tolerance, strnegth
         # {tool: [max val, resolution], ...}
         op_param = {"radius":[4, 1], "tolerance":[100, 5], "strength":[1, 0.01]}
@@ -121,3 +130,9 @@ class ToolSideBar(ttk.Frame):
     def update_colours(self):
         for x in self.colour_hist:
             self.colour_hist[x][0].config(bg=self.colour_hist[x][1])
+
+    def undo(self):
+        self.master.canvas_frame.nanolist.undo()
+
+    def redo(self):
+        self.master.canvas_frame.nanolist.redo()

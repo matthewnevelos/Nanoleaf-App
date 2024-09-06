@@ -26,7 +26,6 @@ class Painting(ttk.Frame):
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag) 
         self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release) 
         self.canvas.bind("<MouseWheel>", self.scroll_radius)
-        # self.canvas.bind('<Motion>', self.on_mouse_move)
 
         self.triangles = []  # Store references to the triangle items
         
@@ -130,7 +129,7 @@ class Painting(ttk.Frame):
         # op_params of the form {"radius":2, ...}
         op_params = {x:self.master.toolbar.options[x].get() for x in self.master.toolbar.options}
         op_params["colour1"] = self.master.toolbar.colour1
-
+        
         if item[0] != self.background or self.master.toolbar.selected_tool=="dropper":
             self.current_tool_function = self.tool_functions.get(self.master.toolbar.selected_tool)
             if self.current_tool_function:
@@ -141,6 +140,7 @@ class Painting(ttk.Frame):
             if self.master.toolbar.selected_tool != "blend":
                 self.nanolist[item] = self.master.toolbar.colour1
                 self.nanolist.update()
+                self.nanolist.update_undo()
 
     def on_canvas_drag(self, event: tk.Event) -> None:
         """
@@ -159,6 +159,7 @@ class Painting(ttk.Frame):
         Handles mouse button release after dragging
         """
         self.current_tool_function = None
+        self.nanolist.update_undo()
 
     def scroll_radius(self, event: tk.Event):
         current_r = self.master.toolbar.options['radius'].get()
